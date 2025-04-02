@@ -13,6 +13,7 @@ var nodemailer = require("nodemailer");
 require("dotenv").config({ path: "variables.env" });
 
 var urlcliente = process.env.URLCLIENTE;
+var timeZone = process.env.TIMEZONE;
 
 const permisos = {
   origin: "*",
@@ -67,8 +68,8 @@ router.post("/agenda", cors(), async function (req, res) {
   var item = {
     aplicacion: "apiBancoCentral",
     username: "system",
-    hora: req.body.data.hora,
-    minuto: req.body.data.minuto,
+    hora: taskdata.hora,
+    minuto: taskdata.minuto,
     taskdata: JSON.stringify(taskdata),
     res: "",
   };
