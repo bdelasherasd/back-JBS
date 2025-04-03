@@ -13,7 +13,9 @@ var task = sequelize.define("task", {
   minuto: type.INTEGER,
   taskdata: "NVARCHAR(MAX)",
   res: "NVARCHAR(MAX)",
+  dia: type.INTEGER,
 });
+//sequelize.sync({ alter: true });
 sequelize.sync();
 
 module.exports = task;

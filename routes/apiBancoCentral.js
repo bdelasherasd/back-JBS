@@ -32,9 +32,11 @@ router.options("*", async function (req, res) {
 router.post("/agenda", cors(), async function (req, res) {
   showLog(req, res);
   let taskdata = {
+    diaOrig: req.sanitize(req.body.dia),
     dia: req.sanitize(req.body.dia),
     hora: req.sanitize(req.body.hora),
     minuto: req.sanitize(req.body.minuto),
+    usuario: req.sanitize(req.body.usuario),
   };
 
   var diaCron = "";
@@ -67,11 +69,12 @@ router.post("/agenda", cors(), async function (req, res) {
   );
   var item = {
     aplicacion: "apiBancoCentral",
-    username: "system",
+    username: taskdata.usuario,
     hora: taskdata.hora,
     minuto: taskdata.minuto,
     taskdata: JSON.stringify(taskdata),
     res: "",
+    dia: taskdata.diaOrig,
   };
   task
     .create(item)
@@ -79,10 +82,37 @@ router.post("/agenda", cors(), async function (req, res) {
       global.tjobs.push({ id: datanew.idTask, job: job });
 
       console.log("tarea guardada");
+      res.send({
+        error: false,
+        message: "Tarea guardada",
+        taskdata: taskdata,
+      });
     })
     .catch((err) => {
       console.log(err);
     });
+});
+
+router.get("/listTasks/:usuario", cors(), async function (req, res) {
+  showLog(req, res);
+  let usuario = req.params.usuario;
+  let sql = "";
+  if (usuario == "admin") {
+    sql += "select * from tasks";
+  } else {
+    sql += "select * from tasks where (username ='" + usuario + "')";
+  }
+  try {
+    let data = await sequelize.query(sql);
+    data = data[0];
+    if (data.length > 0) {
+      res.send(data);
+    } else {
+      data = { error: "Tarea no encontrada" };
+    }
+  } catch (error) {
+    console.log(error.message);
+  }
 });
 
 var reprograma = function (taskdata, idTask) {
