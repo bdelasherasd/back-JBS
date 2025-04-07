@@ -116,6 +116,23 @@ router.post("/eliminaagenda", cors(), async function (req, res) {
   }
 });
 
+router.get("/listDolar", cors(), async function (req, res) {
+  showLog(req, res);
+  let sql =
+    "select top 1000 id, convert(varchar, fecha, 23) fecha, valor from dolarobs order by fecha desc";
+  try {
+    let data = await sequelize.query(sql);
+    data = data[0];
+    if (data.length > 0) {
+      res.send(data);
+    } else {
+      data = { error: "Dolar no encontrado" };
+    }
+  } catch (error) {
+    console.log(error.message);
+  }
+});
+
 router.get("/listTasks/:usuario", cors(), async function (req, res) {
   showLog(req, res);
   let usuario = req.params.usuario;
@@ -182,19 +199,29 @@ const procesaAgenda = async (req, res, taskdata) => {
 };
 
 const registraDolar = async (data) => {
+  let dataDolar = {};
+  let ultimoValorValido = 0;
   let valores = data.Series.Obs;
   valores.map((item) => {
-    let data = {
-      fecha: formateaFecha(item.indexDateString),
-      valor: Number(item.value),
-    };
+    if (item.value != "NaN") {
+      ultimoValorValido = Number(item.value);
+      dataDolar = {
+        fecha: formateaFecha(item.indexDateString),
+        valor: Number(item.value),
+      };
+    } else {
+      dataDolar = {
+        fecha: formateaFecha(item.indexDateString),
+        valor: ultimoValorValido,
+      };
+    }
     dolarobs
-      .create(data)
+      .create(dataDolar)
       .then((datanew) => {
         console.log("Dolar registrado");
       })
       .catch((err) => {
-        console.log("error al registrar dolar, ya registrado", data);
+        console.log("error al registrar dolar, ya registrado", dataDolar);
       });
   });
 };
@@ -206,8 +233,9 @@ const formateaFecha = (fecha) => {
 
 const getDias = async () => {
   let fecha = new Date();
+  fecha.setDate(fecha.getDate() + 4);
   let diaFinal = fecha.toISOString().split("T")[0];
-  fecha.setDate(fecha.getDate() - 7);
+  fecha.setDate(fecha.getDate() - 14);
   let diaInicial = fecha.toISOString().split("T")[0];
   return { diaInicial, diaFinal };
 };
