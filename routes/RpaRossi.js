@@ -69,7 +69,7 @@ router.post("/agenda", cors(), async function (req, res) {
     }
   );
   var item = {
-    aplicacion: "apiBancoCentral",
+    aplicacion: "RpaRossi",
     username: taskdata.usuario,
     hora: taskdata.hora,
     minuto: taskdata.minuto,
@@ -110,23 +110,6 @@ router.post("/eliminaagenda", cors(), async function (req, res) {
       global.tjobs = global.tjobs.filter((t) => t.id !== req.params.id);
     } else {
       res.send({ error: true, message: "Tarea no encontrada" });
-    }
-  } catch (error) {
-    console.log(error.message);
-  }
-});
-
-router.get("/listDolar", cors(), async function (req, res) {
-  showLog(req, res);
-  let sql =
-    "select top 1000 id, convert(varchar, fecha, 23) fecha, valor from dolarobs order by fecha desc";
-  try {
-    let data = await sequelize.query(sql);
-    data = data[0];
-    if (data.length > 0) {
-      res.send(data);
-    } else {
-      data = { error: "Dolar no encontrado" };
     }
   } catch (error) {
     console.log(error.message);
@@ -177,72 +160,13 @@ var reprograma = function (taskdata, idTask) {
   global.tjobs.push({ id: idTask, job: job });
 };
 
-const axios = require("axios");
-
 const procesaAgenda = async (req, res, taskdata) => {
-  console.log("Procesando dolar banco central...");
-  let uid = process.env.API_BCE_USER;
-  let pwd = process.env.API_BCE_PWD;
-  let { diaInicial, diaFinal } = await getDias();
-  let url = `https://si3.bcentral.cl/SieteRestWS/SieteRestWS.ashx?user=${uid}&pass=${pwd}&firstdate=${diaInicial}&lastdate=${diaFinal}&timeseries=F073.TCO.PRE.Z.D&function=GetSeries`;
-
-  try {
-    let response = await axios.get(url, { timeout: 60000 }); // 60 segundos
-    await registraDolar(response.data);
-    console.log("dolar banco central registrado...");
-  } catch (error) {
-    console.log("Error al procesar la agenda:", error);
-    res.send({
-      error: true,
-      message: "Error al procesar la agenda",
-    });
-  }
+  console.log("Inicio Ejecución Programada RPA Rossi");
+  res.send({
+    error: false,
+    message: "Inicio Ejecución Programada RPA Rossi",
+  });
 };
 
-const registraDolar = async (data) => {
-  let valores = data.Series.Obs;
-  let dataDolar = {};
-  let ultimoValorValido = 0;
-
-  for (item of valores) {
-    if (item.value != "NaN") {
-      ultimoValorValido = Number(item.value);
-      dataDolar = {
-        fecha: formateaFecha(item.indexDateString),
-        valor: Number(item.value),
-      };
-    } else {
-      dataDolar = {
-        fecha: formateaFecha(item.indexDateString),
-        valor: ultimoValorValido,
-      };
-    }
-    try {
-      let existe = await dolarobs.findOne({
-        where: { fecha: dataDolar.fecha },
-      });
-      if (!existe) {
-        await dolarobs.create(dataDolar);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  }
-};
-
-const formateaFecha = (fecha) => {
-  const [dia, mes, ano] = fecha.split("-");
-  return `${ano}-${mes}-${dia}`;
-};
-
-const getDias = async () => {
-  let fecha = new Date();
-  fecha.setDate(fecha.getDate() + 4);
-  let diaFinal = fecha.toISOString().split("T")[0];
-  fecha.setDate(fecha.getDate() - 60);
-  let diaInicial = fecha.toISOString().split("T")[0];
-  return { diaInicial, diaFinal };
-};
-
-exports.apiBancoCentralRoutes = router;
-exports.reprogramaapiBancoCentral = reprograma;
+exports.RpaRossiRoutes = router;
+exports.reprogramaRpaRossi = reprograma;

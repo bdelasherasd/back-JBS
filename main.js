@@ -32,6 +32,9 @@ var {
 } = require("./routes/apiBancoCentral");
 app.use("/apiBancoCentral", apiBancoCentralRoutes);
 
+var { RpaRossiRoutes, reprogramaRpaRossi } = require("./routes/RpaRossi");
+app.use("/RpaRossi", RpaRossiRoutes);
+
 var Port = process.env.PORT || "9999";
 var Ip = process.env.HOST || "0.0.0.0";
 
@@ -60,6 +63,9 @@ var procesaTareas = function () {
         data.forEach((e) => {
           if (e.aplicacion === "apiBancoCentral") {
             reprogramaapiBancoCentral(JSON.parse(e.taskdata), e.idTask);
+          }
+          if (e.aplicacion === "RpaRossi") {
+            reprogramaRpaRossi(JSON.parse(e.taskdata), e.idTask);
           }
         });
         resolve(data);
