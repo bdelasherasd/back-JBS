@@ -1,4 +1,6 @@
 var express = require("express");
+const path = require("path");
+
 require("dotenv").config({ path: "variables.env" });
 var expressSanitizer = require("express-sanitizer");
 var passport = require("passport");
@@ -34,6 +36,13 @@ app.use("/apiBancoCentral", apiBancoCentralRoutes);
 
 var { RpaRossiRoutes, reprogramaRpaRossi } = require("./routes/RpaRossi");
 app.use("/RpaRossi", RpaRossiRoutes);
+
+app.use(express.static(path.join(__dirname, "../front/dist")));
+
+// Para cualquier otra ruta que no sea /api, devolver index.html
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../front/dist", "index.html"));
+});
 
 var Port = process.env.PORT || "9999";
 var Ip = process.env.HOST || "0.0.0.0";
