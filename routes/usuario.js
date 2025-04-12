@@ -6,6 +6,7 @@ var sequelize = require("../models/sequelizeConnection");
 const showLog = require("../middleware/showLog");
 const bcrypt = require("bcrypt");
 var nodemailer = require("nodemailer");
+const CryptoJS = require("crypto-js");
 
 require("dotenv").config({ path: "variables.env" });
 
@@ -145,8 +146,11 @@ const existeUsuario = async (email) => {
 };
 
 router.post("/login", cors(), async function (req, res) {
-  let email = req.sanitize(req.body.email);
-  let password = req.sanitize(req.body.password);
+  const bytes = CryptoJS.AES.decrypt(req.body.data, "ZP7777");
+  const decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+
+  let email = req.sanitize(decryptedData.email);
+  let password = req.sanitize(decryptedData.password);
   let sql = "";
   sql += "select * from usuarios where email='" + email + "'";
   try {
