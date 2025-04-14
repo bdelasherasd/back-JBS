@@ -282,6 +282,30 @@ const procesaDetalles = async (referencia) => {
       .trim()
       .split("Puerto Descarga")[1];
 
+    var btn = "";
+    if (subtabla.length == 1) {
+      btn = await driver.wait(
+        until.elementLocated(
+          By.xpath(
+            "/html/body/div[1]/div[2]/div/div/div/div/div[2]/div/div/div/div/table/tbody/tr/td[9]/div/button"
+          )
+        ),
+        20000
+      );
+    } else {
+      var linea = sublinea + 1;
+      btn = await driver.wait(
+        until.elementLocated(
+          By.xpath(
+            `/html/body/div[1]/div[2]/div/div/div/div/div[2]/div/div/div/div/table/tbody/tr/td[${linea}]/div/button`
+          )
+        ),
+        20000
+      );
+    }
+    await btn.click();
+    await driver.sleep(2000);
+
     sublinea++;
   }
 
