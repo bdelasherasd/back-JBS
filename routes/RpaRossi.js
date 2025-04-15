@@ -5,6 +5,7 @@ var usuario = require("../models/usuario");
 var task = require("../models/task");
 var sequelize = require("../models/sequelizeConnection");
 var dolarobs = require("../models/dolarobs");
+var imp_importacion = require("../models/imp_importacion");
 const showLog = require("../middleware/showLog");
 const cron = require("node-cron");
 
@@ -176,6 +177,7 @@ const screen = {
 var { parseFromString } = require("dom-parser");
 
 var firefox = require("selenium-webdriver/firefox");
+const imp_gastos_aduana = require("../models/imp_gastos_aduana");
 var driver;
 
 const procesaAgenda = async (req, res, taskdata) => {
@@ -209,10 +211,10 @@ const procesaAgenda = async (req, res, taskdata) => {
   await driver.sleep(2000);
 
   await procesaDetalles(taskdata.referencia);
-
+  await driver.quit();
   res.send({
     error: false,
-    message: "Inicio Ejecución Programada RPA Rossi",
+    message: "Fin Ejecución Programada RPA Rossi",
   });
 };
 
@@ -234,18 +236,36 @@ const procesaDetalles = async (referencia) => {
     }
   }
 
-  var btn = await driver.wait(
-    until.elementLocated(
-      By.xpath('//*[@id="exportar"]/fieldset/div[18]/button')
-    ),
-    20000
-  );
-  await btn.click();
+  while (true) {
+    try {
+      var btn = await driver.wait(
+        until.elementLocated(
+          By.xpath('//*[@id="exportar"]/fieldset/div[18]/button')
+        ),
+        20000
+      );
+      await btn.click();
+      break;
+    } catch (e) {
+      console.log("Esperando boton buscar");
+      await driver.sleep(2000);
+    }
+  }
 
-  var subtabla = await driver.wait(
-    until.elementsLocated(By.xpath('//*[@id="tabla"]')),
-    20000
-  );
+  await driver.sleep(2000);
+
+  while (true) {
+    try {
+      var subtabla = await driver.wait(
+        until.elementsLocated(By.xpath('//*[@id="tabla"]')),
+        20000
+      );
+      break;
+    } catch (e) {
+      console.log("Esperando tabla");
+      await driver.sleep(2000);
+    }
+  }
 
   var sublinea = 0;
   while (sublinea < subtabla.length) {
@@ -254,9 +274,16 @@ const procesaDetalles = async (referencia) => {
     var columnas = dom.getElementsByTagName("td");
 
     var nroDespacho = columnas[0].textContent.trim();
-    var tipoTranporte = columnas[0].innerHTML.includes("fa-truck")
-      ? "Terrestre"
-      : "Maritimo";
+
+    var tipoTranporte = "";
+    if (columnas[0].innerHTML.includes("fa-plane")) {
+      tipoTranporte = "Aerea";
+    } else if (columnas[0].innerHTML.includes("fa-anchor")) {
+      tipoTranporte = "Maritimo";
+    } else {
+      tipoTranporte = "Terrestre";
+    }
+
     var tipoOperacion = columnas[1].textContent.trim();
     var fechaETA = columnas[2].textContent.trim();
     var proveedor = columnas[3].textContent
@@ -282,6 +309,23 @@ const procesaDetalles = async (referencia) => {
       .trim()
       .split("Puerto Descarga")[1];
 
+    var item = {
+      nroDespacho: nroDespacho,
+      tipoTranporte: tipoTranporte,
+      tipoOperacion: tipoOperacion,
+      fechaETA: fechaETA,
+      proveedor: proveedor,
+      regimen: regimen,
+      refCliente: refCliente,
+      impuestoDI: impuestoDI,
+      puertoEmbarque: puertoEmbarque,
+      paisEmbarque: paisEmbarque,
+      aduana: aduana,
+      puertoDescarga: puertoDescarga,
+    };
+    await saveImportacion(item);
+    console.log("Guardando Importacion", item);
+
     var btn = "";
     if (subtabla.length == 1) {
       btn = await driver.wait(
@@ -306,11 +350,282 @@ const procesaDetalles = async (referencia) => {
     await btn.click();
     await driver.sleep(2000);
 
+    await procesaVentana(item.nroDespacho);
+
     sublinea++;
   }
 
   console.log("Esperando 10 segundos");
   await driver.sleep(10000);
+};
+
+const saveImportacion = async (item) => {
+  try {
+    let existe = await imp_importacion.findOne({
+      where: { nroDespacho: item.nroDespacho },
+    });
+    if (!existe) {
+      await imp_importacion.create(item);
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const procesaVentana = async (nroDespacho) => {
+  var tabGastos = null;
+  while (true) {
+    try {
+      tabGastos = await driver.wait(
+        until.elementLocated(By.xpath('//*[@id="myTab"]/li[2]/a/span')),
+        20000
+      );
+      await tabGastos.click();
+      break;
+    } catch (e) {
+      console.log("Esperando tabGastos");
+      await driver.sleep(2000);
+    }
+  }
+
+  await driver.sleep(2000);
+
+  var nDesp = "";
+  try {
+    var nDesp = await driver
+      .wait(
+        until.elementLocated(
+          By.xpath(
+            '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[1]/div[1]/p/span'
+          )
+        ),
+        4000
+      )
+      .getText();
+  } catch (error) {
+    return;
+  }
+  var nRef = await driver
+    .wait(
+      until.elementLocated(
+        By.xpath(
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[1]/div[2]/p/span'
+        )
+      ),
+      20000
+    )
+    .getText();
+  var nave = await driver
+    .wait(
+      until.elementLocated(
+        By.xpath(
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[1]/div[3]/p/span'
+        )
+      ),
+      20000
+    )
+    .getText();
+
+  var mercaderia = await driver
+    .wait(
+      until.elementLocated(
+        By.xpath(
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[2]/div[1]/p/span'
+        )
+      ),
+      20000
+    )
+    .getText();
+
+  var bultos = await driver
+    .wait(
+      until.elementLocated(
+        By.xpath(
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[2]/div[2]/p/span'
+        )
+      )
+    )
+    .getText();
+
+  var tipocambio = await driver
+    .wait(
+      until.elementLocated(
+        By.xpath(
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[3]/div[1]/p/span'
+        )
+      )
+    )
+    .getText();
+
+  var monedaCif = await driver
+    .wait(
+      until.elementLocated(
+        By.xpath(
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[3]/div[2]/p/span[1]'
+        )
+      )
+    )
+    .getText();
+
+  var valorCif = await driver
+    .wait(
+      until.elementLocated(
+        By.xpath(
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[3]/div[2]/p/span[2]'
+        )
+      )
+    )
+    .getText();
+
+  var MonedaIvaGcp = await driver
+    .wait(
+      until.elementLocated(
+        By.xpath(
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[4]/div[1]/p/span[1]'
+        )
+      )
+    )
+    .getText();
+
+  var valorIvaGcp = await driver
+    .wait(
+      until.elementLocated(
+        By.xpath(
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[4]/div[1]/p/span[2]'
+        )
+      )
+    )
+    .getText();
+
+  var monedaAdValorem = await driver
+    .wait(
+      until.elementLocated(
+        By.xpath(
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[4]/div[2]/p/span[1]'
+        )
+      )
+    )
+    .getText();
+
+  var AdValorem = await driver
+    .wait(
+      until.elementLocated(
+        By.xpath(
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[4]/div[2]/p/span[2]'
+        )
+      )
+    )
+    .getText();
+
+  var MonedaAlmacenaje = await driver
+    .wait(
+      until.elementLocated(
+        By.xpath(
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[4]/div[3]/p/span[1]'
+        )
+      )
+    )
+    .getText();
+
+  var Almacenaje = await driver
+    .wait(
+      until.elementLocated(
+        By.xpath(
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[4]/div[3]/p/span[2]'
+        )
+      )
+    )
+    .getText();
+
+  var tablaGastosAgencia = await driver.wait(
+    until.elementsLocated(
+      By.xpath('//*[@id="contenedor-costo"]/div/div/div[2]/div/div')
+    ),
+    20000
+  );
+
+  var gastosAgencia = [];
+
+  for (e of tablaGastosAgencia) {
+    var sublineaHTML = await e.getAttribute("innerHTML");
+    var dom = parseFromString(sublineaHTML);
+    var columnas = dom.getElementsByTagName("div");
+
+    var item = {
+      nombreGasto: columnas[0].textContent.trim(),
+      moneda: columnas[1].textContent.trim().split(" ")[0],
+      valor: columnas[1].textContent.trim().split(" ")[1],
+    };
+    gastosAgencia.push(item);
+  }
+
+  var tablaDesembolsos = await driver.wait(
+    until.elementsLocated(
+      By.xpath('//*[@id="contenedor-costo"]/div/div/div[3]/div/div')
+    ),
+    20000
+  );
+  var desembolsos = [];
+
+  for (e of tablaDesembolsos) {
+    var sublineaHTML = await e.getAttribute("innerHTML");
+    var dom = parseFromString(sublineaHTML);
+    var columnas = dom.getElementsByTagName("div");
+
+    var item = {
+      nombreGasto: columnas[0].textContent.trim().replace(/\n/g, ""),
+      moneda: columnas[1].textContent.trim().split(" ")[0],
+      valor: columnas[1].textContent.trim().split(" ")[1],
+    };
+    desembolsos.push(item);
+  }
+
+  var item = {
+    idImportacion: await getIdImportacion(nroDespacho),
+    nroDespacho: nDesp,
+    nroReferencia: nRef,
+    nave: nave,
+    mercaderia: mercaderia,
+    bultos: bultos,
+    tipocambio: tipocambio,
+    monedaCif: monedaCif,
+    valorCif: valorCif,
+    MonedaIvaGcp: MonedaIvaGcp,
+    valorIvaGcp: valorIvaGcp,
+    monedaAdValorem: monedaAdValorem,
+    AdValorem: AdValorem,
+    MonedaAlmacenaje: MonedaAlmacenaje,
+    Almacenaje: Almacenaje,
+    gastosAgencia: JSON.stringify(gastosAgencia),
+    desembolsosAgencia: JSON.stringify(desembolsos),
+  };
+  await saveGastos(item);
+
+  console.log("Esperando 5 segundos");
+};
+
+const getIdImportacion = async (nroDespachoI) => {
+  try {
+    let data = await imp_importacion.findOne({
+      where: { nroDespacho: nroDespachoI },
+    });
+    return data.idImportacion;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const saveGastos = async (item) => {
+  try {
+    let existe = await imp_gastos_aduana.findOne({
+      where: { nroDespacho: item.nroDespacho },
+    });
+    if (!existe) {
+      await imp_gastos_aduana.create(item);
+    }
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 exports.RpaRossiRoutes = router;
