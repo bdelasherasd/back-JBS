@@ -6,8 +6,12 @@ var task = require("../models/task");
 var sequelize = require("../models/sequelizeConnection");
 var dolarobs = require("../models/dolarobs");
 var imp_importacion = require("../models/imp_importacion");
+var imp_importacion_archivo = require("../models/imp_importacion_archivo");
 const showLog = require("../middleware/showLog");
 const cron = require("node-cron");
+const { ocrSpace } = require("ocr-space-api-wrapper");
+const path = require("path");
+const fs = require("fs");
 
 const bcrypt = require("bcrypt");
 var nodemailer = require("nodemailer");
@@ -16,6 +20,9 @@ require("dotenv").config({ path: "variables.env" });
 
 var urlcliente = process.env.URLCLIENTE;
 var timeZone = process.env.TIMEZONE;
+var pdfApiKey = process.env.APIKEY_PDF;
+var urlOCR1 = process.env.URL_OCR1;
+var urlOCR2 = process.env.URL_OCR2;
 
 const permisos = {
   origin: "*",
@@ -165,28 +172,35 @@ router.get("/procesaAhora/:referencia", cors(), async function (req, res) {
   procesaAgenda(req, res, { referencia: req.params.referencia });
 });
 
+const { Builder, By, until, Key } = require("selenium-webdriver");
+const { Options } = require("selenium-webdriver/firefox");
+const downloadDir = path.resolve("./", "pdf");
+
+const options = new Options()
+  .setPreference("browser.download.folderList", 2)
+  .setPreference("browser.download.dir", downloadDir)
+  .setPreference("browser.helperApps.neverAsk.saveToDisk", "application/pdf")
+  .setPreference("pdfjs.disabled", true)
+  .setPreference("browser.download.manager.showWhenStarting", false)
+  .setAcceptInsecureCerts(true);
+
 var URLEMPRESA = "https://impo-piero.rossi.cl/login";
 var logText = "";
-var webdriver = require("selenium-webdriver"),
-  By = webdriver.By,
-  until = webdriver.until;
 const screen = {
   width: 1360,
   height: 700,
 };
 var { parseFromString } = require("dom-parser");
 
-var firefox = require("selenium-webdriver/firefox");
 const imp_gastos_aduana = require("../models/imp_gastos_aduana");
 var driver;
 
 const procesaAgenda = async (req, res, taskdata) => {
   console.log("Inicio Ejecución Programada RPA Rossi");
-  driver = new webdriver.Builder()
+  driver = await new Builder()
     .forBrowser("firefox")
-    .setFirefoxOptions(new firefox.Options().set("acceptInsecureCerts", true))
+    .setFirefoxOptions(options)
     .build();
-
   await driver.get(URLEMPRESA);
   await driver.manage().window().setRect(screen);
 
@@ -194,13 +208,13 @@ const procesaAgenda = async (req, res, taskdata) => {
     until.elementLocated(By.xpath('//*[@id="username"]')),
     20000
   );
-  await rut.sendKeys("19686132-7" + webdriver.Key.TAB);
+  await rut.sendKeys("19686132-7" + Key.TAB);
 
   var pwd = await driver.wait(
     until.elementLocated(By.xpath('//*[@id="password"]')),
     20000
   );
-  await pwd.sendKeys("JBSrossi1" + webdriver.Key.TAB);
+  await pwd.sendKeys("JBSrossi1" + Key.TAB);
 
   var btn = await driver.wait(
     until.elementLocated(By.xpath('//*[@id="form"]/footer/button')),
@@ -224,7 +238,7 @@ const procesaDetalles = async (referencia) => {
   var numref = null;
   while (true) {
     try {
-      await numref.sendKeys(referencia + webdriver.Key.TAB);
+      await numref.sendKeys(referencia + Key.TAB);
       break;
     } catch (e) {
       numref = await driver.wait(
@@ -350,13 +364,14 @@ const procesaDetalles = async (referencia) => {
     await btn.click();
     await driver.sleep(2000);
 
-    await procesaVentana(item.nroDespacho);
+    await procesaVentanaGastos(item.nroDespacho);
+    await procesaVentanaDoctos(item.nroDespacho);
 
     sublinea++;
   }
 
-  console.log("Esperando 10 segundos");
-  await driver.sleep(10000);
+  console.log("Esperando 3 segundos");
+  await driver.sleep(3000);
 };
 
 const saveImportacion = async (item) => {
@@ -372,7 +387,98 @@ const saveImportacion = async (item) => {
   }
 };
 
-const procesaVentana = async (nroDespacho) => {
+const procesaVentanaDoctos = async (nroDespacho) => {
+  let existe = await imp_importacion_archivo.findOne({
+    where: { nroDespacho: nroDespacho },
+  });
+  if (existe) {
+    console.log("Ya existe el despacho", nroDespacho);
+    return;
+  }
+
+  var tabDoctos = null;
+  while (true) {
+    try {
+      tabDoctos = await driver.wait(
+        until.elementLocated(By.xpath('//*[@id="myTab"]/li[6]/a/span')),
+        20000
+      );
+      await tabDoctos.click();
+      break;
+    } catch (e) {
+      console.log("Esperando tabDoctos");
+      await driver.sleep(2000);
+    }
+  }
+
+  var nombreArchivo = await driver.wait(
+    until.elementLocated(
+      By.xpath('//*[@id="contenedor-archivos"]/div/div/table/tbody/tr[1]/td[2]')
+    ),
+    20000
+  );
+
+  // var ArchivoHTML = await nombreArchivo.getAttribute("innerHTML");
+  // var dom = parseFromString(ArchivoHTML);
+  // var elemento = dom.getElementsByTagName("a")[0];
+  // var fileName = elemento.getAttribute("href");
+
+  await nombreArchivo.click();
+
+  var fileName = await obtenerPdfMasNuevo(downloadDir);
+  var filePath = path.join(downloadDir, fileName);
+
+  var res = await ocrSpace(filePath, {
+    apiKey: pdfApiKey,
+    ocrUrl: urlOCR1,
+    language: "eng",
+    scale: true,
+    isTable: true,
+    detectOrientation: true,
+    OCREngine: 2,
+  });
+
+  var item = {
+    idImportacion: await getIdImportacion(nroDespacho),
+    nroDespacho: nroDespacho,
+    nombreArchivo: fileName,
+    ocrArchivo: JSON.stringify(res),
+  };
+
+  await saveArchivos(item);
+
+  console.log("Nombre Archivo", fileName);
+};
+
+const saveArchivos = async (item) => {
+  try {
+    let existe = await imp_importacion_archivo.findOne({
+      where: { nroDespacho: item.nroDespacho },
+    });
+    if (!existe) {
+      await imp_importacion_archivo.create(item);
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+async function obtenerPdfMasNuevo(directorio) {
+  const archivos = fs
+    .readdirSync(directorio)
+    .filter((f) => f.endsWith(".pdf"))
+    .map((nombre) => {
+      const ruta = path.join(directorio, nombre);
+      return { nombre, mtime: fs.statSync(ruta).mtime };
+    });
+
+  if (archivos.length === 0) return null;
+
+  archivos.sort((a, b) => b.mtime - a.mtime);
+  return archivos[0].nombre;
+}
+
+const procesaVentanaGastos = async (nroDespacho) => {
   var tabGastos = null;
   while (true) {
     try {
@@ -627,6 +733,36 @@ const saveGastos = async (item) => {
     console.log(error);
   }
 };
+
+router.get("/seara/:nroDespacho", cors(), async function (req, res) {
+  let nroDespacho = req.params.nroDespacho;
+
+  let ocr = "";
+  try {
+    let existe = await imp_importacion_archivo.findOne({
+      where: { nroDespacho: nroDespacho },
+    });
+    if (!existe) {
+      res.send({
+        error: true,
+        message: "No existe el despacho",
+      });
+    } else {
+      ocr = JSON.parse(existe.ocrArchivo);
+      res.send({
+        error: false,
+        message: "OCR",
+        data: ocr,
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.send({
+      error: true,
+      message: "Error en la consulta",
+    });
+  }
+});
 
 exports.RpaRossiRoutes = router;
 exports.reprogramaRpaRossi = reprograma;

@@ -28,6 +28,9 @@ app.use("/aplicacion", aplicacionRoutes);
 var privilegioRoutes = require("./routes/privilegio");
 app.use("/privilegio", privilegioRoutes);
 
+var cargaSkuRoutes = require("./routes/cargaSku");
+app.use("/cargaSku", cargaSkuRoutes);
+
 var {
   apiBancoCentralRoutes,
   reprogramaapiBancoCentral,
