@@ -5,6 +5,7 @@ var usuario = require("../models/usuario");
 var task = require("../models/task");
 var sequelize = require("../models/sequelizeConnection");
 var dolarobs = require("../models/dolarobs");
+var imp_sku = require("../models/imp_sku");
 var imp_importacion = require("../models/imp_importacion");
 var imp_importacion_archivo = require("../models/imp_importacion_archivo");
 const showLog = require("../middleware/showLog");
@@ -193,6 +194,7 @@ const screen = {
 var { parseFromString } = require("dom-parser");
 
 const imp_gastos_aduana = require("../models/imp_gastos_aduana");
+const { text } = require("stream/consumers");
 var driver;
 
 const procesaAgenda = async (req, res, taskdata) => {
@@ -222,7 +224,6 @@ const procesaAgenda = async (req, res, taskdata) => {
   );
 
   await btn.click();
-  await driver.sleep(2000);
 
   await procesaDetalles(taskdata.referencia);
   await driver.quit();
@@ -249,6 +250,8 @@ const procesaDetalles = async (referencia) => {
       );
     }
   }
+
+  await driver.sleep(2000);
 
   while (true) {
     try {
@@ -431,11 +434,11 @@ const procesaVentanaDoctos = async (nroDespacho) => {
   var res = await ocrSpace(filePath, {
     apiKey: pdfApiKey,
     ocrUrl: urlOCR1,
-    language: "eng",
+    language: "spa",
     scale: true,
     isTable: true,
     detectOrientation: true,
-    OCREngine: 2,
+    OCREngine: 1,
   });
 
   var item = {
@@ -749,10 +752,11 @@ router.get("/seara/:nroDespacho", cors(), async function (req, res) {
       });
     } else {
       ocr = JSON.parse(existe.ocrArchivo);
+      await procesaOcr(ocr, nroDespacho);
+
       res.send({
         error: false,
-        message: "OCR",
-        data: ocr,
+        message: "OCR as good as possible",
       });
     }
   } catch (error) {
@@ -763,6 +767,133 @@ router.get("/seara/:nroDespacho", cors(), async function (req, res) {
     });
   }
 });
+
+const procesaOcr = async (ocr, nroDespacho) => {
+  let data = [];
+  let dataPacking = [];
+  let item = {
+    cantidad: "0",
+    codigo: "",
+    descripcion: "",
+    valor: "0",
+    codigoInvalido: false,
+  };
+
+  //Procesa FACTURA COMERCIAL
+  //Se busca la pagina que contiene la factura comercial
+  //Se busca la tabla que contiene los datos de la factura comercial
+  //Se busca la linea que contiene la cantidad y el valor
+  //Se busca la linea que contiene el codigo
+  //Se guarda la cantidad, el valor y el codigo en el objeto item
+  //Se guarda el array data en la base de datos
+
+  let paginasFactura = [];
+  for (let [i, e] of ocr.ParsedResults.entries()) {
+    let texto = e.ParsedText.toUpperCase();
+    if (texto.includes("FACTURA COMERCIAL")) {
+      paginasFactura.push(i);
+    }
+  }
+
+  for (let [j, pagina] of paginasFactura.entries()) {
+    let tabla = ocr.ParsedResults[pagina].ParsedText.split("\n");
+
+    for (let [i, e] of tabla.entries()) {
+      let texto = e.toUpperCase();
+      if (texto.includes("CAJAS PALETIZADAS")) {
+        let linea = tabla[i - 1].split("\t");
+
+        item.cantidad = linea[0];
+        item.valor = linea[linea.length - 2];
+
+        let linea2 = tabla[i].split("\t");
+        item.codigo = linea2[linea2.length - 2];
+
+        item.codigoInvalido = await valCodigo(item.codigo);
+
+        data.push(item);
+      }
+    }
+  }
+
+  try {
+    await imp_importacion_archivo.update(
+      { detalles: JSON.stringify(data) },
+      { where: { nroDespacho: nroDespacho } }
+    );
+  } catch (error) {
+    console.log(error);
+  }
+
+  //  Procesa PACKING LIST
+  //Se busca la pagina que contiene el packing list
+  //Se busca la tabla que contiene los datos del packing list
+
+  let paginasPackingList = [];
+  for (let [i, e] of ocr.ParsedResults.entries()) {
+    let texto = e.ParsedText.toUpperCase();
+    if (texto.includes("PACKING LIST")) {
+      paginasPackingList.push(i);
+    }
+  }
+
+  for (let [j, pagina] of paginasPackingList.entries()) {
+    let tabla = ocr.ParsedResults[pagina].ParsedText.split("\n");
+
+    for (let [i, e] of tabla.entries()) {
+      let texto = e.toUpperCase();
+      let columnas = texto.split("\t");
+
+      if (texto.includes("DESCRIPCIÓN")) {
+        let indInicio = i + 1;
+        for (let k = indInicio; k < indInicio + 100; k++) {
+          if (k >= tabla.length) {
+            break;
+          }
+          let linea = tabla[k].split("\t");
+          let item = {
+            descripcion: "",
+            fechaProduccion: "",
+            sif: "",
+            fechaVencimiento: "",
+            CajasPallet: "",
+            PesoNeto: "",
+            PesoBruto: "",
+          };
+          if (linea.length > 5) {
+            item.descripcion = linea[0];
+            item.fechaProduccion = linea[1];
+            item.sif = linea[2];
+            item.fechaVencimiento = linea[3];
+            item.CajasPallet = linea[4];
+            item.PesoNeto = linea[5];
+            item.PesoBruto = linea[6];
+            dataPacking.push(item);
+          }
+        }
+        try {
+          await imp_importacion_archivo.update(
+            { packingList: JSON.stringify(dataPacking) },
+            { where: { nroDespacho: nroDespacho } }
+          );
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    }
+  }
+};
+
+const valCodigo = async (codigo) => {
+  let existe = await imp_sku.findOne({
+    where: { sku: codigo },
+  });
+  if (!existe) {
+    return true;
+  } else {
+    return false;
+  }
+};
 
 exports.RpaRossiRoutes = router;
 exports.reprogramaRpaRossi = reprograma;

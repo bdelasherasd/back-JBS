@@ -11,7 +11,9 @@ var imp_importacion_archivo = sequelize.define("imp_importacion_archivo", {
   nroDespacho: type.STRING,
   nombreArchivo: type.STRING,
   ocrArchivo: "varchar(MAX)",
+  detalles: "varchar(MAX)",
+  packingList: "varchar(MAX)",
 });
-sequelize.sync();
+sequelize.sync({ alter: true });
 
 module.exports = imp_importacion_archivo;
