@@ -45,6 +45,8 @@ app.use("/RpaRossi", RpaRossiRoutes);
 
 app.use(express.static(path.join(__dirname, "../front/dist")));
 
+app.use("/pdfs", express.static(path.join(__dirname, "./pdf")));
+
 // Para cualquier otra ruta que no sea /api, devolver index.html
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../front/dist", "index.html"));
