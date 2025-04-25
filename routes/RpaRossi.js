@@ -434,10 +434,10 @@ const procesaVentanaDoctos = async (nroDespacho) => {
   var res = await ocrSpace(filePath, {
     apiKey: pdfApiKey,
     ocrUrl: urlOCR1,
-    language: "spa",
+    language: "eng",
     scale: true,
     isTable: true,
-    detectOrientation: true,
+    detectOrientation: false,
     OCREngine: 1,
   });
 
@@ -770,7 +770,6 @@ router.get("/seara/:nroDespacho", cors(), async function (req, res) {
 
 const procesaOcr = async (ocr, nroDespacho) => {
   let data = [];
-  let dataPacking = [];
   let item = {
     cantidad: "0",
     codigo: "",
@@ -830,6 +829,8 @@ const procesaOcr = async (ocr, nroDespacho) => {
   //Se busca la tabla que contiene los datos del packing list
 
   let paginasPackingList = [];
+  let dataPacking = [];
+
   for (let [i, e] of ocr.ParsedResults.entries()) {
     let texto = e.ParsedText.toUpperCase();
     if (texto.includes("PACKING LIST")) {
@@ -844,7 +845,7 @@ const procesaOcr = async (ocr, nroDespacho) => {
       let texto = e.toUpperCase();
       let columnas = texto.split("\t");
 
-      if (texto.includes("DESCRIPCIÓN")) {
+      if (texto.includes("VALIDEZ CAIXAS")) {
         let indInicio = i + 1;
         for (let k = indInicio; k < indInicio + 100; k++) {
           if (k >= tabla.length) {
