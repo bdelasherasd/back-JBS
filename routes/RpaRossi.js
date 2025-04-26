@@ -436,11 +436,11 @@ const procesaVentanaDoctos = async (nroDespacho) => {
   var res = await ocrSpace(filePath, {
     apiKey: pdfApiKey,
     ocrUrl: urlOCR1,
-    language: "eng",
+    language: "spa",
     scale: true,
     isTable: true,
     detectOrientation: false,
-    OCREngine: 1,
+    OCREngine: 2,
   });
 
   var item = {
@@ -500,6 +500,44 @@ const procesaVentanaGastos = async (nroDespacho) => {
   }
 
   await driver.sleep(2000);
+
+  var noFacturado = "";
+  try {
+    var noFacturado = await driver
+      .wait(
+        until.elementLocated(
+          By.xpath('//*[@id="contenedor-costo"]/div/div/p[2]')
+        ),
+        4000
+      )
+      .getText();
+  } catch (error) {
+    console.log("hay gastos");
+  }
+
+  if (noFacturado.includes("no está facturado")) {
+    var item = {
+      idImportacion: await getIdImportacion(nroDespacho),
+      nroDespacho: nroDespacho,
+      nroReferencia: "",
+      nave: "",
+      mercaderia: "",
+      bultos: "",
+      tipocambio: "",
+      monedaCif: "",
+      valorCif: "",
+      MonedaIvaGcp: "",
+      valorIvaGcp: "",
+      monedaAdValorem: "",
+      AdValorem: "",
+      MonedaAlmacenaje: "",
+      Almacenaje: "",
+      gastosAgencia: JSON.stringify([]),
+      desembolsosAgencia: JSON.stringify([]),
+    };
+    await saveGastos(item);
+    return;
+  }
 
   var nDesp = "";
   try {
