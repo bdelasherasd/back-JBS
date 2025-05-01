@@ -13,6 +13,7 @@ var imp_importacion_archivo = sequelize.define("imp_importacion_archivo", {
   ocrArchivo: "varchar(MAX)",
   detalles: "varchar(MAX)",
   packingList: "varchar(MAX)",
+  ocrArchivoPL: "varchar(MAX)",
 });
 sequelize.sync({ alter: true });
 

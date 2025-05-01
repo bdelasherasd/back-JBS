@@ -15,6 +15,7 @@ const cron = require("node-cron");
 const { ocrSpace } = require("ocr-space-api-wrapper");
 const path = require("path");
 const fs = require("fs");
+const csv = require("csv-parser");
 
 const bcrypt = require("bcrypt");
 var nodemailer = require("nodemailer");
@@ -72,6 +73,9 @@ router.post("/agenda", cors(), async function (req, res) {
           "/" +
           taskdata.dia
       );
+      (taskdata["referencia"] = "lote"),
+        (taskdata["fechaDesde"] = process.env.FECHA_DESDE_RPA);
+
       await procesaAgenda(req, res, taskdata);
     },
     {
@@ -161,6 +165,8 @@ var reprograma = function (taskdata, idTask) {
           " / " +
           taskdata.dia
       );
+      (taskdata["referencia"] = "lote"),
+        (taskdata["fechaDesde"] = process.env.FECHA_DESDE_RPA);
       procesaAgenda(null, null, taskdata);
     },
     {
@@ -173,6 +179,13 @@ var reprograma = function (taskdata, idTask) {
 
 router.get("/procesaAhora/:referencia", cors(), async function (req, res) {
   procesaAgenda(req, res, { referencia: req.params.referencia });
+});
+
+router.get("/procesaLote/:fechaDesde", cors(), async function (req, res) {
+  procesaAgenda(req, res, {
+    referencia: "lote",
+    fechaDesde: req.params.fechaDesde,
+  });
 });
 
 const { Builder, By, until, Key } = require("selenium-webdriver");
@@ -227,12 +240,93 @@ const procesaAgenda = async (req, res, taskdata) => {
 
   await btn.click();
 
-  await procesaDetalles(taskdata.referencia);
+  if (taskdata.referencia == "lote") {
+    await procesaDetallesLote(taskdata.fechaDesde);
+  } else {
+    await procesaDetalles(taskdata.referencia);
+  }
+
   await driver.quit();
   res.send({
     error: false,
     message: "Fin Ejecución Programada RPA Rossi",
   });
+};
+
+const procesaDetallesLote = async (fechaDesde) => {
+  var btn = await getObjeto('//*[@id="tabla_wrapper"]/div[1]/div[2]/button/i');
+  await btn.click();
+
+  await driver.sleep(5000);
+
+  var fileName = await obtenerCsvMasNuevo(downloadDir);
+  var filePath = path.join(downloadDir, fileName);
+
+  const results = await procesaCsv(filePath);
+
+  const despachos = [];
+
+  for (let [i, e] of results.entries()) {
+    let eta = e["eta"];
+    if (!eta.includes("No Ingresada") && !eta.includes("Pendiente")) {
+      let ano = eta.split("-")[2];
+      let mes = eta.split("-")[1];
+      let dia = eta.split("-")[0];
+      let fecha = ano + "-" + mes + "-" + dia;
+      if (fecha >= fechaDesde) {
+        despachos.push({
+          despacho: e.despacho,
+          referencia: e.referencia_cliente,
+        });
+      }
+    }
+  }
+  console.log("Despachos", despachos);
+
+  for (let [i, e] of despachos.entries()) {
+    let existe = await imp_importacion.findOne({
+      where: { nroDespacho: e.despacho },
+    });
+    if (!existe) {
+      await procesaDetalles(e.referencia);
+    } else {
+      console.log("Ya existe el despacho", e);
+    }
+  }
+};
+
+const procesaCsv = async (filePath) => {
+  const results = [];
+
+  return new Promise((resolve, reject) => {
+    try {
+      fs.createReadStream(filePath) // <-- tu archivo CSV
+        .pipe(csv())
+        .on("data", (data) => results.push(data))
+        .on("end", () => {
+          resolve(results); // aquí tienes los datos como objetos
+        })
+        .on("error", (err) => {
+          console.error("Error leyendo el archivo:", err);
+        });
+    } catch (error) {
+      console.error("Error procesando el archivo CSV:", error);
+    }
+  });
+};
+
+const getObjeto = async (xpath) => {
+  var countTryes = 0;
+  var maxTryes = 20;
+  while (countTryes < maxTryes) {
+    try {
+      var e = await driver.wait(until.elementLocated(By.xpath(xpath)), 20000);
+      return e;
+    } catch (e) {
+      console.log("Esperando objeto ", xpath);
+      countTryes++;
+    }
+  }
 };
 
 const procesaDetalles = async (referencia) => {
@@ -241,6 +335,13 @@ const procesaDetalles = async (referencia) => {
   var numref = null;
   while (true) {
     try {
+      try {
+        await numref.clear();
+      } catch (e) {
+        // Si clear falla, usar combinación de teclas para borrar
+        await numref.sendKeys(Key.CONTROL, "a", Key.DELETE);
+      }
+
       await numref.sendKeys(referencia + Key.TAB);
       break;
     } catch (e) {
@@ -372,6 +473,11 @@ const procesaDetalles = async (referencia) => {
     await procesaVentanaGastos(item.nroDespacho);
     await procesaVentanaDoctos(item.nroDespacho);
 
+    let btnCerrarModal = await getObjeto(
+      '//*[@id="main-modal"]/div/div/div[3]/button'
+    );
+    await btnCerrarModal.click();
+
     sublinea++;
   }
 
@@ -439,8 +545,18 @@ const procesaVentanaDoctos = async (nroDespacho) => {
     language: "spa",
     scale: true,
     isTable: true,
-    detectOrientation: false,
+    detectOrientation: true,
     OCREngine: 2,
+  });
+
+  var resPL = await ocrSpace(filePath, {
+    apiKey: pdfApiKey,
+    ocrUrl: urlOCR1,
+    language: "spa",
+    scale: true,
+    isTable: true,
+    detectOrientation: true,
+    OCREngine: 1,
   });
 
   var item = {
@@ -448,6 +564,7 @@ const procesaVentanaDoctos = async (nroDespacho) => {
     nroDespacho: nroDespacho,
     nombreArchivo: fileName,
     ocrArchivo: JSON.stringify(res),
+    ocrArchivoPL: JSON.stringify(resPL),
   };
 
   await saveArchivos(item);
@@ -472,6 +589,21 @@ async function obtenerPdfMasNuevo(directorio) {
   const archivos = fs
     .readdirSync(directorio)
     .filter((f) => f.endsWith(".pdf"))
+    .map((nombre) => {
+      const ruta = path.join(directorio, nombre);
+      return { nombre, mtime: fs.statSync(ruta).mtime };
+    });
+
+  if (archivos.length === 0) return null;
+
+  archivos.sort((a, b) => b.mtime - a.mtime);
+  return archivos[0].nombre;
+}
+
+async function obtenerCsvMasNuevo(directorio) {
+  const archivos = fs
+    .readdirSync(directorio)
+    .filter((f) => f.endsWith(".csv"))
     .map((nombre) => {
       const ruta = path.join(directorio, nombre);
       return { nombre, mtime: fs.statSync(ruta).mtime };
@@ -781,6 +913,7 @@ router.get("/seara/:nroDespacho", cors(), async function (req, res) {
   let nroDespacho = req.params.nroDespacho;
 
   let ocr = "";
+  let ocrPL = "";
   try {
     let existe = await imp_importacion_archivo.findOne({
       where: { nroDespacho: nroDespacho },
@@ -792,7 +925,8 @@ router.get("/seara/:nroDespacho", cors(), async function (req, res) {
       });
     } else {
       ocr = JSON.parse(existe.ocrArchivo);
-      await procesaOcrSeara(ocr, nroDespacho);
+      ocrPL = JSON.parse(existe.ocrArchivoPL);
+      await procesaOcrSeara(ocr, ocrPL, nroDespacho);
 
       res.send({
         error: false,
