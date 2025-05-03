@@ -26,7 +26,7 @@ router.options("*", async function (req, res) {
 router.get("/listImportaciones", cors(), async function (req, res) {
   showLog(req, res);
   let sql = "";
-  sql += "select * from imp_importacions";
+  sql += "select top 1000 * from imp_importacions order by idImportacion desc";
   try {
     let data = await sequelize.query(sql);
     data = data[0];
@@ -162,6 +162,53 @@ router.post("/updateDetalles", cors(), async function (req, res) {
 
     let datos = {
       detalles: detalles,
+    };
+
+    let result = await imp_importacion_archivo.update(datos, {
+      where: { idImportacion: req.sanitize(req.body.idImportacion) },
+    });
+    result["error"] = false;
+    res.send(result);
+  } catch (error) {
+    console.log({ username: false, error: error.message });
+  }
+});
+
+router.post("/updatePackingList", cors(), async function (req, res) {
+  showLog(req, res);
+
+  let datos = {
+    idImportacion: req.sanitize(req.body.idImportacion),
+    index: req.sanitize(req.body.index),
+    descripcion: req.sanitize(req.body.descripcion),
+    sif: req.sanitize(req.body.sif),
+    fechaVencimiento: req.sanitize(req.body.fechaVencimiento),
+    CajasPallet: req.sanitize(req.body.CajasPallet),
+    PesoNeto: req.sanitize(req.body.PesoNeto),
+    PesoBruto: req.sanitize(req.body.PesoBruto),
+  };
+
+  try {
+    let resultImp = await imp_importacion_archivo.findOne({
+      where: {
+        idImportacion: req.body.idImportacion,
+      },
+    });
+
+    let det = JSON.parse(resultImp.packingList);
+    let item = {
+      descripcion: req.sanitize(req.body.descripcion),
+      sif: req.sanitize(req.body.sif),
+      fechaVencimiento: req.sanitize(req.body.fechaVencimiento),
+      CajasPallet: req.sanitize(req.body.CajasPallet),
+      PesoNeto: req.sanitize(req.body.PesoNeto),
+      PesoBruto: req.sanitize(req.body.PesoBruto),
+    };
+    det[req.body.index] = item;
+    let detalles = JSON.stringify(det);
+
+    let datos = {
+      packingList: detalles,
     };
 
     let result = await imp_importacion_archivo.update(datos, {
