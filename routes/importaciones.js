@@ -156,6 +156,8 @@ router.post("/updateDetalles", cors(), async function (req, res) {
       valor: req.body.valor,
       descripcion: "",
       codigoInvalido: false,
+      cantidadInvalida: false,
+      valorInvalido: false,
     };
     det[req.body.index] = item;
     let detalles = JSON.stringify(det);
@@ -203,6 +205,9 @@ router.post("/updatePackingList", cors(), async function (req, res) {
       CajasPallet: req.sanitize(req.body.CajasPallet),
       PesoNeto: req.sanitize(req.body.PesoNeto),
       PesoBruto: req.sanitize(req.body.PesoBruto),
+      vencimientoInvalido: false,
+      pesonetoInvalido: false,
+      pesobrutoInvalido: false,
     };
     det[req.body.index] = item;
     let detalles = JSON.stringify(det);
@@ -245,12 +250,63 @@ router.post("/insertDetalles", cors(), async function (req, res) {
       valor: req.body.valor,
       descripcion: "",
       codigoInvalido: false,
+      cantidadInvalida: false,
+      valorInvalido: false,
     };
     det.push(item);
     let detalles = JSON.stringify(det);
 
     let datos = {
       detalles: detalles,
+    };
+
+    let result = await imp_importacion_archivo.update(datos, {
+      where: { idImportacion: req.sanitize(req.body.idImportacion) },
+    });
+    result["error"] = false;
+    res.send(result);
+  } catch (error) {
+    console.log({ username: false, error: error.message });
+  }
+});
+
+router.post("/insertPackingList", cors(), async function (req, res) {
+  showLog(req, res);
+
+  let datos = {
+    idImportacion: req.sanitize(req.body.idImportacion),
+    descripcion: req.sanitize(req.body.descripcion),
+    sif: req.sanitize(req.body.sif),
+    fechaVencimiento: req.sanitize(req.body.fechaVencimiento),
+    CajasPallet: req.sanitize(req.body.CajasPallet),
+    PesoNeto: req.sanitize(req.body.PesoNeto),
+    PesoBruto: req.sanitize(req.body.PesoBruto),
+  };
+
+  try {
+    let resultImp = await imp_importacion_archivo.findOne({
+      where: {
+        idImportacion: req.body.idImportacion,
+      },
+    });
+
+    let det = JSON.parse(resultImp.packingList || "[]");
+    let item = {
+      descripcion: req.sanitize(req.body.descripcion),
+      sif: req.sanitize(req.body.sif),
+      fechaVencimiento: req.sanitize(req.body.fechaVencimiento),
+      CajasPallet: req.sanitize(req.body.CajasPallet),
+      PesoNeto: req.sanitize(req.body.PesoNeto),
+      PesoBruto: req.sanitize(req.body.PesoBruto),
+      vencimientoInvalido: false,
+      pesonetoInvalido: false,
+      pesobrutoInvalido: false,
+    };
+    det.push(item);
+    let detalles = JSON.stringify(det);
+
+    let datos = {
+      packingList: detalles,
     };
 
     let result = await imp_importacion_archivo.update(datos, {
@@ -287,6 +343,39 @@ router.post("/deleteDetalles", cors(), async function (req, res) {
 
     let datos = {
       detalles: detalles,
+    };
+
+    let result = await imp_importacion_archivo.update(datos, {
+      where: { idImportacion: req.sanitize(req.body.idImportacion) },
+    });
+    result["error"] = false;
+    res.send(result);
+  } catch (error) {
+    console.log({ username: false, error: error.message });
+  }
+});
+
+router.post("/deletePackingList", cors(), async function (req, res) {
+  showLog(req, res);
+
+  let datos = {
+    idImportacion: req.sanitize(req.body.idImportacion),
+    index: req.sanitize(req.body.index),
+  };
+
+  try {
+    let resultImp = await imp_importacion_archivo.findOne({
+      where: {
+        idImportacion: req.body.idImportacion,
+      },
+    });
+
+    let det = JSON.parse(resultImp.packingList);
+    det.splice(req.body.index, 1);
+    let detalles = JSON.stringify(det);
+
+    let datos = {
+      packingList: detalles,
     };
 
     let result = await imp_importacion_archivo.update(datos, {

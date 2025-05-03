@@ -49,12 +49,20 @@ const procesaOcrSearaTerrestre = async (ocr, ocrPL, nroDespacho) => {
           valor: "0",
           peso: "0",
           codigoInvalido: false,
+          cantidadInvalida: false,
+          valorInvalido: false,
         };
 
         let linea = tabla[i - 1].split("\t");
 
-        item.cantidad = linea[0].replace(/[^\d,\.]/g, "");
-        item.valor = linea[linea.length - 2].replace(/[^\d,\.]/g, "");
+        item.cantidad = linea[0]
+          .replace(/[^\d,\.]/g, "")
+          .replace(/\./g, "")
+          .replace(/,/g, ".");
+        item.valor = linea[linea.length - 2]
+          .replace(/[^\d,\.]/g, "")
+          .replace(/\./g, "")
+          .replace(/,/g, ".");
 
         let linea2 = tabla[i].split("\t");
 
@@ -63,6 +71,8 @@ const procesaOcrSearaTerrestre = async (ocr, ocrPL, nroDespacho) => {
         item.codigo = lineaConCodigo[lineaConCodigo.length - 2];
 
         item.codigoInvalido = await valCodigo(item.codigo);
+        item.cantidadInvalida = await valCantidad(item.cantidad);
+        item.valorInvalido = await valValor(item.valor);
 
         data.push(item);
       }
@@ -124,6 +134,9 @@ const procesaOcrSearaTerrestre = async (ocr, ocrPL, nroDespacho) => {
             CajasPallet: "",
             PesoNeto: "",
             PesoBruto: "",
+            vencimientoInvalido: false,
+            pesonetoInvalido: false,
+            pesobrutoInvalido: false,
           };
           // if (linea.length < 7) {
           //   const nuevoArr = [...linea]; // copiar para no modificar el original
@@ -149,10 +162,17 @@ const procesaOcrSearaTerrestre = async (ocr, ocrPL, nroDespacho) => {
             item.CajasPallet = linea[linea.length - 4];
             item.PesoNeto = linea[linea.length - 3]
               .replace("o", "0")
-              .replace(/[^\d,\.]/g, "");
+              .replace(/[^\d,\.]/g, "")
+              .replace(/,/g, "");
             item.PesoBruto = linea[linea.length - 2]
               .replace("o", "0")
-              .replace(/[^\d,\.]/g, "");
+              .replace(/[^\d,\.]/g, "")
+              .replace(/,/g, "");
+
+            item.vencimientoInvalido = await valFecha(item.fechaVencimiento);
+            item.pesonetoInvalido = await valCantidad(item.PesoNeto);
+            item.pesobrutoInvalido = await valCantidad(item.PesoBruto);
+
             dataPacking.push(item);
           }
         }
@@ -195,6 +215,9 @@ const procesaOcrSearaTerrestre = async (ocr, ocrPL, nroDespacho) => {
               CajasPallet: "",
               PesoNeto: "",
               PesoBruto: "",
+              vencimientoInvalido: false,
+              pesonetoInvalido: false,
+              pesobrutoInvalido: false,
             };
 
             if (linea.length > 5) {
@@ -215,10 +238,17 @@ const procesaOcrSearaTerrestre = async (ocr, ocrPL, nroDespacho) => {
               item.CajasPallet = linea[4];
               item.PesoNeto = linea[5]
                 .replace("o", "0")
-                .replace(/[^\d,\.]/g, "");
+                .replace(/[^\d,\.]/g, "")
+                .replace(/,/g, "");
               item.PesoBruto = linea[6]
                 .replace("o", "0")
-                .replace(/[^\d,\.]/g, "");
+                .replace(/[^\d,\.]/g, "")
+                .replace(/,/g, "");
+
+              item.vencimientoInvalido = await valFecha(item.fechaVencimiento);
+              item.pesonetoInvalido = await valCantidad(item.PesoNeto);
+              item.pesobrutoInvalido = await valCantidad(item.PesoBruto);
+
               dataPacking.push(item);
             }
           }
@@ -274,12 +304,16 @@ const procesaOcrSearaEstrategia3 = async (ocr, ocrPL, nroDespacho) => {
           valor: "0",
           peso: "0",
           codigoInvalido: false,
+          cantidadInvalida: false,
+          valorInvalido: false,
         };
 
         let linea = tabla[i - 2].split("\t");
 
-        item.cantidad = linea[0];
-        item.valor = linea[linea.length - 2];
+        item.cantidad = linea[0].replace(/\./g, "").replace(/,/g, ".");
+        item.valor = linea[linea.length - 2]
+          .replace(/\./g, "")
+          .replace(/,/g, ".");
 
         let linea2 = tabla[i - 1].split("\t");
 
@@ -288,6 +322,8 @@ const procesaOcrSearaEstrategia3 = async (ocr, ocrPL, nroDespacho) => {
         item.codigo = lineaConCodigo[lineaConCodigo.length - 2];
 
         item.codigoInvalido = await valCodigo(item.codigo);
+        item.cantidadInvalida = await valCantidad(item.cantidad);
+        item.valorInvalido = await valValor(item.valor);
 
         data.push(item);
       }
@@ -344,12 +380,16 @@ const procesaOcrSearaEstrategia2 = async (ocr, ocrPL, nroDespacho) => {
           valor: "0",
           peso: "0",
           codigoInvalido: false,
+          cantidadInvalida: false,
+          valorInvalido: false,
         };
 
         let linea = tabla[i - 2].split("\t");
 
-        item.cantidad = linea[0];
-        item.valor = linea[linea.length - 2];
+        item.cantidad = linea[0].replace(/\./g, "").replace(/,/g, ".");
+        item.valor = linea[linea.length - 2]
+          .replace(/\./g, "")
+          .replace(/,/g, ".");
 
         let linea2 = tabla[i - 1].split("\t");
 
@@ -358,6 +398,8 @@ const procesaOcrSearaEstrategia2 = async (ocr, ocrPL, nroDespacho) => {
         item.codigo = lineaConCodigo[lineaConCodigo.length - 2];
 
         item.codigoInvalido = await valCodigo(item.codigo);
+        item.cantidadInvalida = await valCantidad(item.cantidad);
+        item.valorInvalido = await valValor(item.valor);
 
         data.push(item);
       }
@@ -399,6 +441,8 @@ const procesaOcrSearaMaritimo = async (ocr, ocrPL, nroDespacho) => {
       valor: "0",
       peso: "0",
       codigoInvalido: false,
+      cantidadInvalida: false,
+      valorInvalido: false,
     };
     for (let [i, e] of tabla.entries()) {
       let texto = e.toUpperCase();
@@ -415,14 +459,18 @@ const procesaOcrSearaMaritimo = async (ocr, ocrPL, nroDespacho) => {
         item.codigo = lineacod[lineacod.length - 1];
 
         let lineavalor = tabla[i - 3].split("\t");
-        item.valor = lineavalor[lineavalor.length - 2];
+        item.valor = lineavalor[lineavalor.length - 2]
+          .replace(/\./g, "")
+          .replace(/,/g, ".");
       }
       if (texto.includes("OF CARTONS")) {
         let lineaqty = tabla[i].split("\t")[0].split("ED:");
-        item.cantidad = lineaqty[1];
+        item.cantidad = lineaqty[1].replace(/\./g, "").replace(/,/g, ".");
       }
     }
     item.codigoInvalido = await valCodigo(item.codigo);
+    item.cantidadInvalida = await valCantidad(item.cantidad);
+    item.valorInvalido = await valValor(item.valor);
 
     data.push(item);
   }
@@ -480,6 +528,9 @@ const procesaOcrSearaMaritimo = async (ocr, ocrPL, nroDespacho) => {
             CajasPallet: "",
             PesoNeto: "",
             PesoBruto: "",
+            vencimientoInvalido: false,
+            pesonetoInvalido: false,
+            pesobrutoInvalido: false,
           };
           if (linea.length > 6) {
             item.descripcion = linea[0];
@@ -496,11 +547,18 @@ const procesaOcrSearaMaritimo = async (ocr, ocrPL, nroDespacho) => {
             }
             item.CajasPallet = linea[linea.length - 4].replace(/[^\d,\.]/g, "");
             item.PesoNeto = linea[linea.length - 3]
-              ? linea[linea.length - 3].replace(/[^\d,\.]/g, "")
+              ? linea[linea.length - 3]
+                  .replace(/[^\d,\.]/g, "")
+                  .replace(/,/g, "")
               : "";
             item.PesoBruto = linea[linea.length - 2]
-              ? linea[linea.length - 2].replace(/[^\d,\.]/g, "")
+              ? linea[linea.length - 2]
+                  .replace(/[^\d,\.]/g, "")
+                  .replace(/,/g, "")
               : "";
+            item.vencimientoInvalido = await valFecha(item.fechaVencimiento);
+            item.pesonetoInvalido = await valCantidad(item.PesoNeto);
+            item.pesobrutoInvalido = await valCantidad(item.PesoBruto);
             dataPacking.push(item);
           }
         }
@@ -526,6 +584,36 @@ const valCodigo = async (codigo) => {
   } else {
     return false;
   }
+};
+
+const valCantidad = async (cantidad) => {
+  if (isNaN(cantidad) || cantidad <= 0) {
+    return true;
+  } else {
+    return false;
+  }
+};
+
+const valValor = async (valor) => {
+  if (isNaN(valor) || valor <= 0) {
+    return true;
+  } else {
+    return false;
+  }
+};
+
+const valFecha = async (fecha) => {
+  const regex = /^\d{4}\/\d{2}\/\d{2}$/;
+  if (!regex.test(fecha)) return true;
+
+  const [year, month, day] = fecha.split("/").map(Number);
+  const date = new Date(year, month - 1, day);
+
+  return !(
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day
+  );
 };
 
 module.exports = procesaOcrSeara;
