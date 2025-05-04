@@ -25,12 +25,55 @@ router.options("*", async function (req, res) {
 
 router.get("/listImportaciones", cors(), async function (req, res) {
   showLog(req, res);
+
   let sql = "";
-  sql += "select top 1000 * from imp_importacions order by idImportacion desc";
+  sql += "select top 1000 imp_importacions.*,  ";
+  sql += "imp_importacion_archivos.detalles, ";
+  sql += "imp_importacion_archivos.packingList, ";
+  sql += "'true' as valido ";
+  sql += "from imp_importacions left join ";
+  sql +=
+    "imp_importacion_archivos on imp_importacions.idImportacion=imp_importacion_archivos.idImportacion ";
+  sql += "order by imp_importacions.idImportacion desc ";
+
   try {
     let data = await sequelize.query(sql);
     data = data[0];
     //res.status(200).json({data})
+
+    let hayErrores = false;
+
+    for (let [index, d] of data.entries()) {
+      let detalles = JSON.parse(d.detalles);
+      if (detalles) {
+        for (let e of detalles) {
+          if (e.codigoInvalido || e.cantidadInvalida || e.valorInvalido) {
+            hayErrores = true;
+            break;
+          }
+        }
+      }
+
+      let packingList = JSON.parse(d.packingList);
+      if (packingList) {
+        for (let e of packingList) {
+          if (
+            e.vencimientoInvalido ||
+            e.pesonetoInvalido ||
+            e.pesobrutoInvalido
+          ) {
+            hayErrores = true;
+            break;
+          }
+        }
+      }
+      if (hayErrores) {
+        data[index].valido = false;
+      } else {
+        data[index].valido = true;
+      }
+    }
+
     res.send(data);
   } catch (error) {
     console.log(error.message);
