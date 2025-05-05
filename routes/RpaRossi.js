@@ -579,6 +579,16 @@ const saveArchivos = async (item) => {
     });
     if (!existe) {
       await imp_importacion_archivo.create(item);
+      let dataImportacion = await imp_importacion.findOne({
+        where: { nroDespacho: item.nroDespacho },
+      });
+      if (dataImportacion.proveedor.toUpperCase().includes("SEARA")) {
+        await procesaOcrSeara(
+          JSON.parse(item.ocrArchivo),
+          JSON.parse(item.ocrArchivoPL),
+          item.nroDespacho
+        );
+      }
     }
   } catch (error) {
     console.log(error);
