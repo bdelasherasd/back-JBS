@@ -34,6 +34,7 @@ router.get("/listImportaciones", cors(), async function (req, res) {
   sql += "from imp_importacions left join ";
   sql +=
     "imp_importacion_archivos on imp_importacions.idImportacion=imp_importacion_archivos.idImportacion ";
+  //sql += "where imp_importacions.nroDespacho=489079 ";
   sql += "order by imp_importacions.idImportacion desc ";
 
   try {
@@ -41,9 +42,8 @@ router.get("/listImportaciones", cors(), async function (req, res) {
     data = data[0];
     //res.status(200).json({data})
 
-    let hayErrores = false;
-
     for (let [index, d] of data.entries()) {
+      let hayErrores = false;
       let detalles = JSON.parse(d.detalles);
       if (detalles) {
         for (let e of detalles) {

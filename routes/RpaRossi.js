@@ -903,6 +903,10 @@ const saveGastos = async (item) => {
     });
     if (!existe) {
       await imp_gastos_aduana.create(item);
+    } else {
+      await imp_gastos_aduana.update(item, {
+        where: { nroDespacho: item.nroDespacho },
+      });
     }
   } catch (error) {
     console.log(error);
