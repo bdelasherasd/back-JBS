@@ -234,7 +234,7 @@ const procesaAgenda = async (req, res, taskdata) => {
   await pwd.sendKeys("JBSrossi1" + Key.TAB);
 
   var btn = await driver.wait(
-    until.elementLocated(By.xpath('//*[@id="form"]/footer/button')),
+    until.elementLocated(By.xpath('//*[@id="form"]/fieldset/button')),
     20000
   );
 
