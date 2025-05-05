@@ -19,6 +19,22 @@ const procesaOcrSeara = async (ocr, ocrPL, nroDespacho) => {
   }
 };
 
+const getPeso = async (ocr, ocrPL) => {
+  let tabla = ocr.ParsedResults[0].ParsedText.toUpperCase().split("\n");
+
+  for (let [i, e] of tabla.entries()) {
+    let texto = e.toUpperCase();
+    if (texto.includes("PESO LIQUIDO:")) {
+      const match = texto.match(/PESO LIQUIDO:\s*([0-9.,]+)/);
+      let peso = match[1]
+        .replace(/[^\d,\.]/g, "")
+        .replace(/\./g, "")
+        .replace(/,/g, ".");
+      return peso;
+    }
+  }
+};
+
 const procesaOcrSearaTerrestre = async (ocr, ocrPL, nroDespacho) => {
   let data = [];
 
@@ -48,7 +64,7 @@ const procesaOcrSearaTerrestre = async (ocr, ocrPL, nroDespacho) => {
           codigo: "",
           descripcion: "",
           valor: "0",
-          peso: "0",
+          peso: await getPeso(ocr, ocrPL),
           codigoInvalido: false,
           cantidadInvalida: false,
           valorInvalido: false,
@@ -303,7 +319,7 @@ const procesaOcrSearaEstrategia3 = async (ocr, ocrPL, nroDespacho) => {
           codigo: "",
           descripcion: "",
           valor: "0",
-          peso: "0",
+          peso: await getPeso(ocr, ocrPL),
           codigoInvalido: false,
           cantidadInvalida: false,
           valorInvalido: false,
@@ -379,7 +395,7 @@ const procesaOcrSearaEstrategia2 = async (ocr, ocrPL, nroDespacho) => {
           codigo: "",
           descripcion: "",
           valor: "0",
-          peso: "0",
+          peso: await getPeso(ocr, ocrPL),
           codigoInvalido: false,
           cantidadInvalida: false,
           valorInvalido: false,
@@ -440,7 +456,7 @@ const procesaOcrSearaMaritimo = async (ocr, ocrPL, nroDespacho) => {
       codigo: "",
       descripcion: "",
       valor: "0",
-      peso: "0",
+      peso: await getPeso(ocr, ocrPL),
       codigoInvalido: false,
       cantidadInvalida: false,
       valorInvalido: false,

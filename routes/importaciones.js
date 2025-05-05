@@ -51,6 +51,10 @@ router.get("/listImportaciones", cors(), async function (req, res) {
             hayErrores = true;
             break;
           }
+          if (e.peso == "0") {
+            hayErrores = true;
+            break;
+          }
         }
       }
 
@@ -183,6 +187,7 @@ router.post("/updateDetalles", cors(), async function (req, res) {
     codigo: req.sanitize(req.body.codigo),
     cantidad: req.sanitize(req.body.cantidad),
     valor: req.sanitize(req.body.valor),
+    peso: req.sanitize(req.body.peso),
   };
 
   try {
@@ -197,6 +202,7 @@ router.post("/updateDetalles", cors(), async function (req, res) {
       codigo: req.body.codigo,
       cantidad: req.body.cantidad,
       valor: req.body.valor,
+      peso: req.body.peso,
       descripcion: "",
       codigoInvalido: false,
       cantidadInvalida: false,
@@ -277,6 +283,7 @@ router.post("/insertDetalles", cors(), async function (req, res) {
     codigo: req.sanitize(req.body.codigo),
     cantidad: req.sanitize(req.body.cantidad),
     valor: req.sanitize(req.body.valor),
+    peso: req.sanitize(req.body.peso),
   };
 
   try {
@@ -291,6 +298,7 @@ router.post("/insertDetalles", cors(), async function (req, res) {
       codigo: req.body.codigo,
       cantidad: req.body.cantidad,
       valor: req.body.valor,
+      peso: req.body.peso,
       descripcion: "",
       codigoInvalido: false,
       cantidadInvalida: false,
