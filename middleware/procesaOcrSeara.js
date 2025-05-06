@@ -469,20 +469,27 @@ const procesaOcrSearaMaritimo = async (ocr, ocrPL, nroDespacho) => {
       }
       if (texto.includes("NET WEIGHT")) {
         let lineapeso = tabla[i + 1].split("\t")[1];
-        item.peso = lineapeso;
+        item.peso = lineapeso.replace(/[^0-9.,]/g, "");
+        item.peso = item.peso.replace(/\./g, "").replace(/,/g, ".");
       }
       if (texto.includes("P.O.#")) {
         let lineacod = tabla[i].split("\t")[0].split(" ");
         item.codigo = lineacod[lineacod.length - 1];
 
-        let lineavalor = tabla[i - 3].split("\t");
-        item.valor = lineavalor[lineavalor.length - 2]
-          .replace(/\./g, "")
-          .replace(/,/g, ".");
+        for (let m = i; m >= 0; m--) {
+          let lineaAnterior = tabla[m].trim();
+          if (/^\d/.test(lineaAnterior)) {
+            let lineavalor = lineaAnterior.split("\t");
+            item.valor = lineavalor[lineavalor.length - 1]
+              .replace(/\./g, "")
+              .replace(/,/g, ".");
+            break;
+          }
+        }
       }
+
       if (texto.includes("OF CARTONS")) {
-        let lineaqty = tabla[i].split("\t")[0].split("ED:");
-        item.cantidad = lineaqty[1].replace(/\./g, "").replace(/,/g, ".");
+        item.cantidad = tabla[i].replace(/[^0-9.,]/g, "");
       }
     }
     item.codigoInvalido = await valCodigo(item.codigo);

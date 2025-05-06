@@ -522,17 +522,32 @@ const procesaVentanaDoctos = async (nroDespacho) => {
     }
   }
 
-  var nombreArchivo = await driver.wait(
-    until.elementLocated(
-      By.xpath('//*[@id="contenedor-archivos"]/div/div/table/tbody/tr[1]/td[2]')
+  var tablaArchivos = await driver.wait(
+    until.elementsLocated(
+      By.xpath('//*[@id="contenedor-archivos"]/div/div/table/tbody/tr')
     ),
     20000
   );
 
-  // var ArchivoHTML = await nombreArchivo.getAttribute("innerHTML");
-  // var dom = parseFromString(ArchivoHTML);
-  // var elemento = dom.getElementsByTagName("a")[0];
-  // var fileName = elemento.getAttribute("href");
+  //  var Archivos = [];
+  let indiceArchivo = 0;
+  for ([indice, e] of tablaArchivos.entries()) {
+    var sublineaHTML = await e.getAttribute("innerHTML");
+    var dom = parseFromString(sublineaHTML);
+    var columnas = dom.getElementsByTagName("td");
+
+    if (columnas[0].textContent.trim().toUpperCase().includes("FULL")) {
+      indiceArchivo = indice + 1;
+      break;
+    }
+  }
+
+  var nombreArchivo = await driver.wait(
+    until.elementLocated(
+      By.xpath(`//*[@id="contenedor-archivos"]/div/div/table/tbody/tr[${indiceArchivo}]/td[2]`)
+    ),
+    20000
+  );
 
   await nombreArchivo.click();
 
