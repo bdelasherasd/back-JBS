@@ -117,26 +117,29 @@ router.get("/getImportacion/:id", cors(), async function (req, res) {
 router.get("/listCodigos/:id", cors(), async function (req, res) {
   showLog(req, res);
 
-  let imp = await imp_importacion.findOne({
-    where: {
-      idImportacion: req.params.id,
-    },
-  });
+  // let imp = await imp_importacion.findOne({
+  //   where: {
+  //     idImportacion: req.params.id,
+  //   },
+  // });
   let sql = "";
 
-  if (imp.proveedor.includes("JBS")) {
-    sql += "select sku , producto ";
-    sql += "from imp_skus ";
-    sql += "where imp_skus.proveedor like '%JBS%' ";
-    sql += "order by sku ";
-  } else {
-    sql += "select sku , producto ";
-    sql += "from imp_skus join ";
-    sql += "imp_importacions on imp_skus.proveedor=imp_importacions.proveedor ";
-    sql += "where imp_importacions.idImportacion=" + req.params.id;
-    sql += "order by sku ";
-  }
+  // if (imp.proveedor.includes("JBS")) {
+  //   sql += "select sku , producto ";
+  //   sql += "from imp_skus ";
+  //   sql += "where imp_skus.proveedor like '%JBS%' ";
+  //   sql += "order by sku ";
+  // } else {
+  //   sql += "select sku , producto ";
+  //   sql += "from imp_skus join ";
+  //   sql += "imp_importacions on imp_skus.proveedor=imp_importacions.proveedor ";
+  //   sql += "where imp_importacions.idImportacion=" + req.params.id;
+  //   sql += "order by sku ";
+  // }
 
+  sql += "select sku , producto ";
+  sql += "from imp_skus ";
+  sql += "order by sku ";
   try {
     let data = await sequelize.query(sql);
     data = data[0];
