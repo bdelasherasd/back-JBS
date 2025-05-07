@@ -11,6 +11,7 @@ var imp_importacion_archivo = require("../models/imp_importacion_archivo");
 const showLog = require("../middleware/showLog");
 const procesaOcrSeara = require("../middleware/procesaOcrSeara");
 const procesaOcrJBS = require("../middleware/procesaOcrJBS");
+const procesaOcrSWIFT = require("../middleware/procesaOcrSWIFT");
 const cron = require("node-cron");
 const { ocrSpace } = require("ocr-space-api-wrapper");
 const path = require("path");
@@ -544,7 +545,9 @@ const procesaVentanaDoctos = async (nroDespacho) => {
 
   var nombreArchivo = await driver.wait(
     until.elementLocated(
-      By.xpath(`//*[@id="contenedor-archivos"]/div/div/table/tbody/tr[${indiceArchivo}]/td[2]`)
+      By.xpath(
+        `//*[@id="contenedor-archivos"]/div/div/table/tbody/tr[${indiceArchivo}]/td[2]`
+      )
     ),
     20000
   );
@@ -599,6 +602,14 @@ const saveArchivos = async (item) => {
       });
       if (dataImportacion.proveedor.toUpperCase().includes("SEARA")) {
         await procesaOcrSeara(
+          JSON.parse(item.ocrArchivo),
+          JSON.parse(item.ocrArchivoPL),
+          item.nroDespacho
+        );
+      } else if (dataImportacion.proveedor.toUpperCase().includes("JBS")) {
+        await procesaOcrJBS(JSON.parse(item.ocrArchivo), item.nroDespacho);
+      } else if (dataImportacion.proveedor.toUpperCase().includes("SWIFT")) {
+        await procesaOcrSWIFT(
           JSON.parse(item.ocrArchivo),
           JSON.parse(item.ocrArchivoPL),
           item.nroDespacho
@@ -987,6 +998,39 @@ router.get("/jbs/:nroDespacho", cors(), async function (req, res) {
     } else {
       ocr = JSON.parse(existe.ocrArchivo);
       await procesaOcrJBS(ocr, nroDespacho);
+
+      res.send({
+        error: false,
+        message: "OCR as good as possible",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.send({
+      error: true,
+      message: "Error en la consulta",
+    });
+  }
+});
+
+router.get("/swift/:nroDespacho", cors(), async function (req, res) {
+  let nroDespacho = req.params.nroDespacho;
+
+  let ocr = "";
+  let ocrPL = "";
+  try {
+    let existe = await imp_importacion_archivo.findOne({
+      where: { nroDespacho: nroDespacho },
+    });
+    if (!existe) {
+      res.send({
+        error: true,
+        message: "No existe el despacho",
+      });
+    } else {
+      ocr = JSON.parse(existe.ocrArchivo);
+      ocrPL = JSON.parse(existe.ocrArchivoPL);
+      await procesaOcrSWIFT(ocr, ocrPL, nroDespacho);
 
       res.send({
         error: false,
