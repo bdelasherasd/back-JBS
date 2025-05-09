@@ -415,12 +415,17 @@ const procesaDetalles = async (referencia) => {
       .split("Regimen Importación")[1];
 
     var refCliente = columnas[4].textContent.trim().split("Impuesto DI")[0];
-    var impuestoDI = columnas[4].textContent
-      .trim()
-      .split("Impuesto DI")[1]
-      .replace("USD", "")
-      .replace(".", "")
-      .trim();
+    var impuestoDI = "";
+    try {
+      impuestoDI = columnas[4].textContent
+        .trim()
+        .split("Impuesto DI")[1]
+        .replace("USD", "")
+        .replace(".", "")
+        .trim();
+    } catch (error) {
+      impuestoDI = "";
+    }
 
     var puertoEmbarque = columnas[5].textContent.trim().split("País Origen")[0];
     var paisEmbarque = columnas[5].textContent.trim().split("País Origen")[1];
@@ -537,10 +542,21 @@ const procesaVentanaDoctos = async (nroDespacho) => {
     var dom = parseFromString(sublineaHTML);
     var columnas = dom.getElementsByTagName("td");
 
+    if (
+      columnas[0].textContent.trim().toUpperCase().includes("NO POSEE ARCHIVOS")
+    ) {
+      indiceArchivo = -1;
+      break;
+    }
+
     if (columnas[0].textContent.trim().toUpperCase().includes("FULL")) {
       indiceArchivo = indice + 1;
       break;
     }
+  }
+
+  if (indiceArchivo == -1) {
+    return;
   }
 
   var nombreArchivo = await driver.wait(
