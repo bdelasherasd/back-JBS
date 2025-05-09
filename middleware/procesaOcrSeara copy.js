@@ -36,7 +36,65 @@ const getPeso = async (ocr, ocrPL) => {
 };
 
 const procesaOcrSearaTerrestre = async (ocr, ocrPL, nroDespacho) => {
-  data = [];
+  let data = [];
+
+  //Procesa FACTURA COMERCIAL
+
+  let paginasFactura = [];
+  for (let [i, e] of ocr.ParsedResults.entries()) {
+    let texto = e.ParsedText.toUpperCase();
+    if (
+      texto.includes("FACTURA COMERCIAL") &&
+      !texto.includes("CARTA DE PORTE INTERNACIONAL") &&
+      !texto.includes("MANIFESTO INTERNACIONAL")
+    ) {
+      paginasFactura.push(i);
+    }
+  }
+
+  for (let [j, pagina] of paginasFactura.entries()) {
+    let tabla = ocr.ParsedResults[pagina].ParsedText.split("\n");
+    let tablaPL = ocrPL.ParsedResults[pagina].ParsedText.split("\n");
+
+    for (let [i, e] of tabla.entries()) {
+      let texto = e.toUpperCase();
+      if (texto.includes("CAJAS PALETIZADAS")) {
+        let item = {
+          cantidad: "0",
+          codigo: "",
+          descripcion: "",
+          valor: "0",
+          peso: await getPeso(ocr, ocrPL),
+          codigoInvalido: false,
+          cantidadInvalida: false,
+          valorInvalido: false,
+        };
+
+        let linea = tabla[i - 1].split("\t");
+
+        item.cantidad = linea[0]
+          .replace(/[^\d,\.]/g, "")
+          .replace(/\./g, "")
+          .replace(/,/g, ".");
+        item.valor = linea[linea.length - 2]
+          .replace(/[^\d,\.]/g, "")
+          .replace(/\./g, "")
+          .replace(/,/g, ".");
+
+        let linea2 = tabla[i].split("\t");
+
+        let lineaConCodigo = linea2.join(" ").replace(/\r/g, "").split(" ");
+
+        item.codigo = lineaConCodigo[lineaConCodigo.length - 2];
+
+        item.codigoInvalido = await valCodigo(item.codigo);
+        item.cantidadInvalida = await valCantidad(item.cantidad);
+        item.valorInvalido = await valValor(item.valor);
+
+        data.push(item);
+      }
+    }
+  }
 
   if (data.length == 0) {
     await procesaOcrSearaEstrategia2(ocr, ocrPL, nroDespacho);
@@ -128,9 +186,6 @@ const procesaOcrSearaTerrestre = async (ocr, ocrPL, nroDespacho) => {
               .replace(/[^\d,\.]/g, "")
               .replace(/,/g, "");
 
-            item.PesoNeto = eliminarPuntosMenosElUltimo(item.PesoNeto);
-            item.PesoBruto = eliminarPuntosMenosElUltimo(item.PesoBruto);
-
             item.vencimientoInvalido = await valFecha(item.fechaVencimiento);
             item.pesonetoInvalido = await valCantidad(item.PesoNeto);
             item.pesobrutoInvalido = await valCantidad(item.PesoBruto);
@@ -207,9 +262,6 @@ const procesaOcrSearaTerrestre = async (ocr, ocrPL, nroDespacho) => {
                 .replace(/[^\d,\.]/g, "")
                 .replace(/,/g, "");
 
-              item.PesoNeto = eliminarPuntosMenosElUltimo(item.PesoNeto);
-              item.PesoBruto = eliminarPuntosMenosElUltimo(item.PesoBruto);
-
               item.vencimientoInvalido = await valFecha(item.fechaVencimiento);
               item.pesonetoInvalido = await valCantidad(item.PesoNeto);
               item.pesobrutoInvalido = await valCantidad(item.PesoBruto);
@@ -228,101 +280,6 @@ const procesaOcrSearaTerrestre = async (ocr, ocrPL, nroDespacho) => {
           }
         }
       }
-    }
-  }
-};
-
-function eliminarPuntosMenosElUltimo(texto) {
-  const ultimaPos = texto.lastIndexOf(".");
-  if (ultimaPos === -1) return texto; // No hay puntos
-
-  // Dividir el texto en dos partes: antes y después del último punto
-  const antes = texto.slice(0, ultimaPos).replace(/\./g, "");
-  const despues = texto.slice(ultimaPos); // Incluye el último punto y lo que sigue
-
-  return antes + despues;
-}
-
-const procesaOcrSearaEstrategia0 = async (ocr, ocrPL, nroDespacho) => {
-  let data = [];
-
-  //Procesa FACTURA COMERCIAL
-
-  let paginasFactura = [];
-  for (let [i, e] of ocr.ParsedResults.entries()) {
-    let texto = e.ParsedText.toUpperCase();
-    if (
-      texto.includes("FACTURA COMERCIAL") &&
-      !texto.includes("CARTA DE PORTE INTERNACIONAL") &&
-      !texto.includes("MANIFESTO INTERNACIONAL")
-    ) {
-      paginasFactura.push(i);
-    }
-  }
-
-  for (let [j, pagina] of paginasFactura.entries()) {
-    let tabla = ocr.ParsedResults[pagina].ParsedText.split("\n");
-    let tablaPL = ocrPL.ParsedResults[pagina].ParsedText.split("\n");
-
-    for (let [i, e] of tabla.entries()) {
-      let texto = e.toUpperCase();
-      if (texto.includes("CAJAS PALETIZADAS")) {
-        let item = {
-          cantidad: "0",
-          codigo: "",
-          descripcion: "",
-          valor: "0",
-          peso: await getPeso(ocr, ocrPL),
-          codigoInvalido: false,
-          cantidadInvalida: false,
-          valorInvalido: false,
-        };
-
-        let linea = tabla[i - 1].split("\t");
-
-        item.cantidad = linea[0]
-          .replace(/[^\d,\.]/g, "")
-          .replace(/\./g, "")
-          .replace(/,/g, ".");
-        item.valor = linea[linea.length - 2]
-          .replace(/[^\d,\.]/g, "")
-          .replace(/\./g, "")
-          .replace(/,/g, ".");
-
-        let linea2 = tabla[i].split("\t");
-
-        let lineaConCodigo = linea2.join(" ").replace(/\r/g, "").split(" ");
-
-        item.codigo = lineaConCodigo[lineaConCodigo.length - 2];
-
-        item.codigoInvalido = await valCodigo(item.codigo);
-        if (item.codigoInvalido) {
-          item.codigo = await buscarCodigo(tablaPL, i);
-        }
-        item.codigoInvalido = await valCodigo(item.codigo);
-
-        if (item.codigoInvalido) {
-          item.codigo = await buscarCodigo(tabla, i);
-        }
-        item.codigoInvalido = await valCodigo(item.codigo);
-
-        item.cantidadInvalida = await valCantidad(item.cantidad);
-        item.valorInvalido = await valValor(item.valor);
-
-        data.push(item);
-      }
-    }
-  }
-  if (data.length == 0) {
-    console.log("No se encontraron datos en la factura comercial");
-  } else {
-    try {
-      await imp_importacion_archivo.update(
-        { detalles: JSON.stringify(data) },
-        { where: { nroDespacho: nroDespacho } }
-      );
-    } catch (error) {
-      console.log(error);
     }
   }
 };
@@ -382,12 +339,6 @@ const procesaOcrSearaEstrategia3 = async (ocr, ocrPL, nroDespacho) => {
         item.codigo = lineaConCodigo[lineaConCodigo.length - 2];
 
         item.codigoInvalido = await valCodigo(item.codigo);
-
-        if (item.codigoInvalido) {
-          item.codigo = await buscarCodigo(tablaPL, i);
-        }
-        item.codigoInvalido = await valCodigo(item.codigo);
-
         item.cantidadInvalida = await valCantidad(item.cantidad);
         item.valorInvalido = await valValor(item.valor);
 
@@ -397,7 +348,7 @@ const procesaOcrSearaEstrategia3 = async (ocr, ocrPL, nroDespacho) => {
   }
 
   if (data.length == 0) {
-    await procesaOcrSearaEstrategia0(ocr, ocrPL, nroDespacho);
+    console.log("No se encontraron datos en la factura comercial");
   } else {
     try {
       await imp_importacion_archivo.update(
@@ -408,28 +359,6 @@ const procesaOcrSearaEstrategia3 = async (ocr, ocrPL, nroDespacho) => {
       console.log(error);
     }
   }
-};
-
-const buscarCodigo = async (tablaPL, i) => {
-  let indInicio = i - 2;
-  let indFin = i + 2;
-  let linea = "";
-  for (let k = indInicio; k < indFin; k++) {
-    l = tablaPL[k].replace(/\r/g, "").split("\t");
-    l2 = l.join("|");
-    linea += l2;
-  }
-  let tLineas = linea.split("|");
-  let codigo = "NO ENCONTRADO";
-  for (let [i, e] of tLineas.entries()) {
-    let texto = e.toUpperCase();
-    let codigoInvalido = await valCodigo(e);
-    if (!codigoInvalido) {
-      codigo = e;
-      break;
-    }
-  }
-  return codigo;
 };
 
 const procesaOcrSearaEstrategia2 = async (ocr, ocrPL, nroDespacho) => {
@@ -453,7 +382,6 @@ const procesaOcrSearaEstrategia2 = async (ocr, ocrPL, nroDespacho) => {
 
   for (let [j, pagina] of paginasFactura.entries()) {
     let tabla = ocrPL.ParsedResults[pagina].ParsedText.split("\n");
-    let tablaNoPL = ocr.ParsedResults[pagina].ParsedText.split("\n");
 
     for (let [i, e] of tabla.entries()) {
       let texto = e.toUpperCase();
@@ -474,16 +402,8 @@ const procesaOcrSearaEstrategia2 = async (ocr, ocrPL, nroDespacho) => {
         };
 
         let linea = tabla[i - 2].split("\t");
-        let lineaCantidad = tabla[i - 3].split("\t");
-        let lineaCantidad2 = tabla[i - 2].split("\t");
 
-        item.cantidad = lineaCantidad[0].replace(/\./g, "").replace(/,/g, ".");
-        if (await valCantidad(item.cantidad)) {
-          item.cantidad = lineaCantidad2[0]
-            .replace(/\./g, "")
-            .replace(/,/g, ".");
-        }
-
+        item.cantidad = linea[0].replace(/\./g, "").replace(/,/g, ".");
         item.valor = linea[linea.length - 2]
           .replace(/\./g, "")
           .replace(/,/g, ".");
@@ -495,17 +415,6 @@ const procesaOcrSearaEstrategia2 = async (ocr, ocrPL, nroDespacho) => {
         item.codigo = lineaConCodigo[lineaConCodigo.length - 2];
 
         item.codigoInvalido = await valCodigo(item.codigo);
-        if (item.codigoInvalido) {
-          item.codigo = await buscarCodigo(tabla, i);
-        }
-        if (item.codigo == "NO ENCONTRADO") {
-          item.codigo = lineaConCodigo[lineaConCodigo.length - 2];
-        }
-        item.codigoInvalido = await valCodigo(item.codigo);
-        if (!item.codigoInvalido) {
-          item.valor = await getValor(tablaNoPL, item.codigo);
-        }
-
         item.cantidadInvalida = await valCantidad(item.cantidad);
         item.valorInvalido = await valValor(item.valor);
 
@@ -524,17 +433,6 @@ const procesaOcrSearaEstrategia2 = async (ocr, ocrPL, nroDespacho) => {
       );
     } catch (error) {
       console.log(error);
-    }
-  }
-};
-
-const getValor = async (tabla, codigo) => {
-  for (let [i, e] of tabla.entries()) {
-    let texto = e.toUpperCase();
-    if (texto.includes(codigo)) {
-      let linea = tabla[i - 1].split("\t");
-      let valor = linea[linea.length - 2].replace(/\./g, "").replace(/,/g, ".");
-      return valor;
     }
   }
 };

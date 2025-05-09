@@ -285,14 +285,15 @@ const procesaDetallesLote = async (fechaDesde) => {
   console.log("Despachos", despachos);
 
   for (let [i, e] of despachos.entries()) {
-    let existe = await imp_importacion_archivo.findOne({
-      where: { nroDespacho: e.despacho },
-    });
-    if (!existe) {
-      await procesaDetalles(e.referencia);
-    } else {
-      console.log("Ya existe el despacho", e);
-    }
+    await procesaDetalles(e.referencia);
+    // let existe = await imp_importacion_archivo.findOne({
+    //   where: { nroDespacho: e.despacho },
+    // });
+    // if (!existe) {
+    //   await procesaDetalles(e.referencia);
+    // } else {
+    //   console.log("Ya existe el despacho", e);
+    // }
   }
 };
 
