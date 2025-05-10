@@ -504,10 +504,27 @@ const procesaOcrSearaEstrategia2 = async (ocr, ocrPL, nroDespacho) => {
         item.codigoInvalido = await valCodigo(item.codigo);
         if (!item.codigoInvalido) {
           item.valor = await getValor(tablaNoPL, item.codigo);
+        } else {
+          item.codigo =
+            lineaConCodigo[lineaConCodigo.length - 3] +
+            "-" +
+            lineaConCodigo[lineaConCodigo.length - 2];
+          item.valor = await getValor(tablaNoPL, item.codigo);
+          item.codigoInvalido = await valCodigo(item.codigo);
         }
 
         item.cantidadInvalida = await valCantidad(item.cantidad);
         item.valorInvalido = await valValor(item.valor);
+
+        if (item.cantidadInvalida) {
+          item.cantidad = "0";
+        }
+        if (item.valorInvalido) {
+          item.valor = "0";
+        }
+        if (item.codigoInvalido) {
+          item.codigo = "0";
+        }
 
         data.push(item);
       }
