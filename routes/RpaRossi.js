@@ -12,6 +12,7 @@ const showLog = require("../middleware/showLog");
 const procesaOcrSeara = require("../middleware/procesaOcrSeara");
 const procesaOcrJBS = require("../middleware/procesaOcrJBS");
 const procesaOcrSWIFT = require("../middleware/procesaOcrSWIFT");
+const procesaOcrPILGRIMS = require("../middleware/procesaOcrPILGRIMS");
 const cron = require("node-cron");
 const { ocrSpace } = require("ocr-space-api-wrapper");
 const path = require("path");
@@ -319,14 +320,17 @@ const procesaCsv = async (filePath) => {
 
 const getObjeto = async (xpath) => {
   var countTryes = 0;
-  var maxTryes = 20;
+  var maxTryes = 5;
   while (countTryes < maxTryes) {
     try {
-      var e = await driver.wait(until.elementLocated(By.xpath(xpath)), 20000);
+      var e = await driver.wait(until.elementLocated(By.xpath(xpath)), 3000);
       return e;
     } catch (e) {
       console.log("Esperando objeto ", xpath);
       countTryes++;
+      if (countTryes == maxTryes) {
+        return null;
+      }
     }
   }
 };
@@ -631,6 +635,12 @@ const saveArchivos = async (item) => {
           JSON.parse(item.ocrArchivoPL),
           item.nroDespacho
         );
+      } else if (dataImportacion.proveedor.toUpperCase().includes("PILGRIMS")) {
+        await procesaOcrPILGRIMS(
+          JSON.parse(item.ocrArchivo),
+          JSON.parse(item.ocrArchivoPL),
+          item.nroDespacho
+        );
       }
     }
   } catch (error) {
@@ -670,6 +680,22 @@ async function obtenerCsvMasNuevo(directorio) {
 
 const procesaVentanaGastos = async (nroDespacho) => {
   var tabGastos = null;
+
+  var nroFacturaText = "";
+  var fechaFacturaText = "";
+
+  var nroFactura = await getObjeto(
+    '//*[@id="tResumen"]/div[1]/div[1]/dl/dd[7]/dl/dd[1]'
+  );
+  if (nroFactura != null) {
+    var nroFacturaText = await nroFactura.getText();
+
+    var fechaFactura = await getObjeto(
+      '//*[@id="tResumen"]/div[1]/div[1]/dl/dd[7]/dl/dd[2]'
+    );
+    var fechaFacturaText = await fechaFactura.getText();
+  }
+
   while (true) {
     try {
       tabGastos = await driver.wait(
@@ -717,6 +743,8 @@ const procesaVentanaGastos = async (nroDespacho) => {
       AdValorem: "",
       MonedaAlmacenaje: "",
       Almacenaje: "",
+      nroFactura: "",
+      fechaFactura: "",
       gastosAgencia: JSON.stringify([]),
       desembolsosAgencia: JSON.stringify([]),
     };
@@ -930,6 +958,8 @@ const procesaVentanaGastos = async (nroDespacho) => {
     AdValorem: AdValorem,
     MonedaAlmacenaje: MonedaAlmacenaje,
     Almacenaje: Almacenaje,
+    nroFactura: nroFacturaText,
+    fechaFactura: fechaFacturaText,
     gastosAgencia: JSON.stringify(gastosAgencia),
     desembolsosAgencia: JSON.stringify(desembolsos),
   };
@@ -1048,6 +1078,39 @@ router.get("/swift/:nroDespacho", cors(), async function (req, res) {
       ocr = JSON.parse(existe.ocrArchivo);
       ocrPL = JSON.parse(existe.ocrArchivoPL);
       await procesaOcrSWIFT(ocr, ocrPL, nroDespacho);
+
+      res.send({
+        error: false,
+        message: "OCR as good as possible",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.send({
+      error: true,
+      message: "Error en la consulta",
+    });
+  }
+});
+
+router.get("/pilgrims/:nroDespacho", cors(), async function (req, res) {
+  let nroDespacho = req.params.nroDespacho;
+
+  let ocr = "";
+  let ocrPL = "";
+  try {
+    let existe = await imp_importacion_archivo.findOne({
+      where: { nroDespacho: nroDespacho },
+    });
+    if (!existe) {
+      res.send({
+        error: true,
+        message: "No existe el despacho",
+      });
+    } else {
+      ocr = JSON.parse(existe.ocrArchivo);
+      ocrPL = JSON.parse(existe.ocrArchivoPL);
+      await procesaOcrPILGRIMS(ocr, ocrPL, nroDespacho);
 
       res.send({
         error: false,
