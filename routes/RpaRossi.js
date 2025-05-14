@@ -694,11 +694,15 @@ const procesaVentanaGastos = async (nroDespacho) => {
       '//*[@id="tResumen"]/div[1]/div[1]/dl/dd[7]/dl/dd[2]'
     );
     var fechaFacturaText = await fechaFactura.getText();
+  }
 
-    var fechaGuia = await getObjeto(
-      '//*[@id="tResumen"]/div[1]/div[1]/dl/dd[6]/dl/dd[2]'
-    );
-    var fechaGuiaText = await fechaGuia.getText();
+  var fechaGuiaText = "";
+  var grupoDetalle = await getObjeto('//*[@id="tResumen"]/div[1]');
+  var grupoDetalleHTML = await grupoDetalle.getAttribute("innerHTML");
+  var t = grupoDetalleHTML.split("Guía de Despacho")[1];
+  var fechaMatch = t.match(/\d{2}-\d{2}-\d{4}/);
+  if (fechaMatch) {
+    fechaGuiaText = fechaMatch[0];
   }
 
   while (true) {
@@ -750,7 +754,7 @@ const procesaVentanaGastos = async (nroDespacho) => {
       Almacenaje: "",
       nroFactura: "",
       fechaFactura: "",
-      fechaGuia: "",
+      fechaGuia: fechaGuiaText,
       gastosAgencia: JSON.stringify([]),
       desembolsosAgencia: JSON.stringify([]),
     };
