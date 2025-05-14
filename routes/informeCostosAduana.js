@@ -46,7 +46,8 @@ router.get("/list/:ano", cors(), async function (req, res) {
   sql += "d.valor dolarObservado, ";
   sql += "b.valorCif [USD Importacion], ";
   sql += "b.valorCif*d.valor [CLP Importacion], ";
-  sql += "replace(b.valorIvaGcp,'.','')  Gcp, ";
+  sql +=
+    "CONVERT(decimal,REPLACE(RTRIM(isnull([valorIvaGcp],'0')),'.',''))  Gcp, ";
   sql += "b.gastosAgencia, ";
   sql += "b.desembolsosAgencia ";
   sql += "from imp_importacions a left join ";
