@@ -1,0 +1,99 @@
+var express = require("express");
+var router = express.Router({ mergeParams: true });
+var cors = require("cors");
+var usuario = require("../models/usuario");
+var task = require("../models/task");
+var sequelize = require("../models/sequelizeConnection");
+var dolarobs = require("../models/dolarobs");
+const showLog = require("../middleware/showLog");
+const cron = require("node-cron");
+
+const bcrypt = require("bcrypt");
+var nodemailer = require("nodemailer");
+
+require("dotenv").config({ path: "variables.env" });
+
+var urlcliente = process.env.URLCLIENTE;
+var timeZone = process.env.TIMEZONE;
+
+const permisos = {
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+router.options("*", async function (req, res) {
+  showLog(req, res);
+  res.set("Access-Control-Allow-Origin", permisos.origin);
+  res.set("Access-Control-Allow-Methods", permisos.methods);
+  res.set("Access-Control-Allow-Headers", permisos.allowedHeaders);
+  res.send();
+});
+
+router.get("/list/:ano", cors(), async function (req, res) {
+  showLog(req, res);
+  let ano = req.sanitize(req.params.ano);
+  let sql = "";
+  sql += "select  ";
+  sql += "a.nroDespacho,  ";
+  sql += "a.refCliente,  ";
+  sql += "a.tipoTranporte,  ";
+  sql += "b.mercaderia,  ";
+  sql += "a.paisEmbarque,  ";
+  sql += "b.fechaGuia fechaImportacion,  ";
+  sql += "a.fechaETA, ";
+  sql += "b.tipocambio, ";
+  sql += "d.valor dolarObservado, ";
+  sql += "b.valorCif [USD Importacion], ";
+  sql += "b.valorCif*d.valor [CLP Importacion], ";
+  sql += "replace(b.valorIvaGcp,'.','')  Gcp, ";
+  sql += "b.gastosAgencia, ";
+  sql += "b.desembolsosAgencia ";
+  sql += "from imp_importacions a left join ";
+  sql += "imp_gastos_aduanas b on a.idImportacion = b.idImportacion left join ";
+  sql +=
+    "     imp_importacion_archivos c on a.idImportacion = c.idImportacion left join ";
+  sql +=
+    "dolarobs d on REPLACE(CONVERT(varchar, d.fecha, 105), '.', '-') = replace(rtrim(b.fechaGuia),'','01-01-1990') ";
+  sql += "where b.fechaGuia like '%" + ano + "%' ";
+  sql += "and b.gastosAgencia <> '[]' ";
+  try {
+    let data = await sequelize.query(sql);
+    data = data[0];
+    if (data.length > 0) {
+      for (let [i, item] of data.entries()) {
+        let gastos = JSON.parse(item.gastosAgencia);
+        let desembolsos = JSON.parse(item.desembolsosAgencia);
+        let gastosAgencia = 0;
+        let desembolsosAgencia = 0;
+        for (let gasto of gastos) {
+          gastosAgencia += parseFloat(gasto.valor.replace(".", ""));
+        }
+        for (let desembolso of desembolsos) {
+          desembolsosAgencia += parseFloat(desembolso.valor.replace(".", ""));
+        }
+        data[i]["TotalgastosAgencia"] = gastosAgencia;
+        data[i]["IVA"] = Math.round(gastosAgencia * 0.19);
+        data[i]["TotaldesembolsosAgencia"] = desembolsosAgencia;
+        data[i]["TotalLiquidacionAgencia"] =
+          desembolsosAgencia +
+          gastosAgencia +
+          Math.round(gastosAgencia * 0.19) +
+          parseFloat(item.Gcp.replace(/\./g, ""));
+      }
+
+      data.forEach((e) => {
+        delete e.gastosAgencia;
+        delete e.desembolsosAgencia;
+      });
+
+      res.send(data);
+    } else {
+      data = { error: "No hay datos" };
+    }
+  } catch (error) {
+    console.log(error.message);
+  }
+});
+
+module.exports = router;

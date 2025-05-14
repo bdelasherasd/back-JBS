@@ -34,6 +34,9 @@ app.use("/cargaSku", cargaSkuRoutes);
 var importacionesRoutes = require("./routes/importaciones");
 app.use("/importaciones", importacionesRoutes);
 
+var informeCostosAduanaRoutes = require("./routes/informeCostosAduana");
+app.use("/informeCostosAduana", informeCostosAduanaRoutes);
+
 var {
   apiBancoCentralRoutes,
   reprogramaapiBancoCentral,
