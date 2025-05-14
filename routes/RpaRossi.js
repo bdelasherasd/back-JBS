@@ -694,6 +694,11 @@ const procesaVentanaGastos = async (nroDespacho) => {
       '//*[@id="tResumen"]/div[1]/div[1]/dl/dd[7]/dl/dd[2]'
     );
     var fechaFacturaText = await fechaFactura.getText();
+
+    var fechaGuia = await getObjeto(
+      '//*[@id="tResumen"]/div[1]/div[1]/dl/dd[6]/dl/dd[2]'
+    );
+    var fechaGuiaText = await fechaGuia.getText();
   }
 
   while (true) {
@@ -745,6 +750,7 @@ const procesaVentanaGastos = async (nroDespacho) => {
       Almacenaje: "",
       nroFactura: "",
       fechaFactura: "",
+      fechaGuia: "",
       gastosAgencia: JSON.stringify([]),
       desembolsosAgencia: JSON.stringify([]),
     };
@@ -960,6 +966,7 @@ const procesaVentanaGastos = async (nroDespacho) => {
     Almacenaje: Almacenaje,
     nroFactura: nroFacturaText,
     fechaFactura: fechaFacturaText,
+    fechaGuia: fechaGuiaText,
     gastosAgencia: JSON.stringify(gastosAgencia),
     desembolsosAgencia: JSON.stringify(desembolsos),
   };
