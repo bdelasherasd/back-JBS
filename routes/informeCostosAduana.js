@@ -80,7 +80,7 @@ router.get("/list/:ano", cors(), async function (req, res) {
           desembolsosAgencia +
           gastosAgencia +
           Math.round(gastosAgencia * 0.19) +
-          parseFloat(item.Gcp.replace(/\./g, ""));
+          item.Gcp;
       }
 
       data.forEach((e) => {
