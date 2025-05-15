@@ -42,7 +42,7 @@ router.get("/list/:ano", cors(), async function (req, res) {
   sql += "a.paisEmbarque,  ";
   sql += "b.fechaGuia fechaImportacion,  ";
   sql += "a.fechaETA, ";
-  sql += "b.tipocambio, ";
+  sql += "convert(float,replace(b.tipocambio,',','.')) tipocambio, ";
   sql += "d.valor dolarObservado, ";
   sql += "b.valorCif [USD Importacion], ";
   sql += "b.valorCif*d.valor [CLP Importacion], ";
