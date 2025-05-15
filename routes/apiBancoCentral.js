@@ -102,12 +102,13 @@ router.post("/eliminaagenda", cors(), async function (req, res) {
   let sql = "delete from tasks where idTask = " + data.id;
   try {
     let task = await sequelize.query(sql);
-    task = task[0];
-    if (task.affectedRows > 0) {
+    task = task[1];
+    if (task > 0) {
       res.send({ error: false, message: "Tarea eliminada" });
-      var job_element = tjobs.filter((t) => t.id == req.params.id);
-      job_element[0].job.destroy();
-      global.tjobs = global.tjobs.filter((t) => t.id !== req.params.id);
+      var job_element = tjobs.filter((t) => t.id == data.id);
+      job_element[0].job.stop();
+      //job_element[0].job.destroy();
+      global.tjobs = global.tjobs.filter((t) => t.id !== data.id);
     } else {
       res.send({ error: true, message: "Tarea no encontrada" });
     }
