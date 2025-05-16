@@ -12,7 +12,7 @@ const procesaOcrMANTIQUEIRA = async (ocr, ocrPL, nroDespacho) => {
     return procesaOcrMANTIQUEIRATerrestre(ocr, ocrPL, nroDespacho, "T");
   }
   if (dataImportacion.tipoTranporte.toUpperCase() == "AEREA") {
-    return procesaOcrMANTIQUEIRAMaritimo(ocr, ocrPL, nroDespacho, "A");
+    return procesaOcrMANTIQUEIRATerrestre(ocr, ocrPL, nroDespacho, "A");
   }
 };
 
@@ -22,8 +22,6 @@ const procesaOcrMANTIQUEIRATerrestre = async (
   nroDespacho,
   tipo
 ) => {
-  let data = [];
-  let dataPacking = [];
   //Procesa FACTURA COMERCIAL
 
   let paginasFactura = [];
@@ -33,31 +31,32 @@ const procesaOcrMANTIQUEIRATerrestre = async (
       paginasFactura.push(i);
     }
   }
-
-  let paginasPackingList = [];
-};
-
-const procesaOcrMANTIQUEIRAMaritimo = async (ocr, ocrPL, nroDespacho, tipo) => {
-  let data = [];
-  let dataPacking = [];
-  //Procesa FACTURA COMERCIAL
-
-  let paginasFactura = [];
-  for (let [i, e] of ocr.ParsedResults.entries()) {
-    let texto = e.ParsedText.toUpperCase();
-    if (texto.includes("COMMERCIAL INVOICE")) {
-      paginasFactura.push(i);
-    }
-  }
+  let dataFactura = await procesaFactura(paginasFactura, ocr, ocrPL);
 
   let paginasPackingList = [];
   for (let [i, e] of ocr.ParsedResults.entries()) {
     let texto = e.ParsedText.toUpperCase();
-    if (texto.includes("PACKING LIST")) {
+    if (texto.includes("LISTA DE EMPAQUE")) {
       paginasPackingList.push(i);
     }
   }
+  let dataPacking = await procesaPackingList(paginasPackingList, ocr, ocrPL);
 
+  try {
+    await imp_importacion_archivo.update(
+      {
+        detalles: JSON.stringify(dataFactura),
+        packingList: JSON.stringify(dataPacking),
+      },
+      { where: { nroDespacho: nroDespacho } }
+    );
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const procesaFactura = async (paginasFactura, ocr, ocrPL) => {
+  let data = [];
   for (let [j, pagina] of paginasFactura.entries()) {
     let tabla = ocr.ParsedResults[pagina].ParsedText.split("\n");
     let tablaPL = ocrPL.ParsedResults[pagina].ParsedText.split("\n");
@@ -65,10 +64,11 @@ const procesaOcrMANTIQUEIRAMaritimo = async (ocr, ocrPL, nroDespacho, tipo) => {
     for (let [i, e] of tabla.entries()) {
       let texto = e.toUpperCase();
       if (
-        texto.includes("CONTAINER") ||
-        (texto.includes("DESCRIPTION") && texto.includes("WEIGHT"))
+        texto.includes("CANTIDAD") &&
+        texto.includes("PAQUETE") &&
+        texto.includes("PRODUCTOS")
       ) {
-        let indInicio = i;
+        let indInicio = i + 1;
         for (let k = indInicio; k < indInicio + 100; k++) {
           if (k >= tabla.length - 1) {
             break;
@@ -77,60 +77,42 @@ const procesaOcrMANTIQUEIRAMaritimo = async (ocr, ocrPL, nroDespacho, tipo) => {
           let lineaMas0 = tabla[k].replace().split("\t");
 
           let campos = lineaMas0.filter((item) => !item.includes("\r"));
-          let lineaTieneCodigo = await buscaCodigoValido(lineaMas0);
 
-          if (lineaTieneCodigo.existe) {
-            let indiceCodigo = lineaTieneCodigo.posicion;
+          if (campos.length >= 5) {
+            let codigo = campos[2].slice(0, 10);
+            let cantidad = limpiarTexto(campos[0]);
+            let valor = limpiarTexto(campos[campos.length - 1]);
+            let peso = await getPeso(tabla);
+            let item = {
+              cantidad: cantidad,
+              codigo: codigo,
+              descripcion: "",
+              valor: valor,
+              peso: peso,
+              codigoInvalido: false,
+              cantidadInvalida: false,
+              valorInvalido: false,
+            };
 
-            let codigo = lineaMas0[indiceCodigo];
-            let codigoInvalido = await valCodigo(codigo);
+            item.codigoInvalido = await valCodigo(item.codigo);
+            item.cantidadInvalida = await valCantidad(item.cantidad);
+            item.valorInvalido = await valValor(item.valor);
 
-            if (!codigoInvalido) {
-              let item = {
-                cantidad: limpiarTexto(campos[indiceCodigo + 2]),
-                codigo: codigo,
-                descripcion: lineaTieneCodigo.descripcion,
-                valor: limpiarTexto(campos[campos.length - 1]),
-                peso: limpiarTexto(campos[indiceCodigo + 3]),
-
-                codigoInvalido: false,
-                cantidadInvalida: false,
-                valorInvalido: false,
-              };
-
-              item.codigoInvalido = await valCodigo(item.codigo);
-              item.cantidadInvalida = await valCantidad(item.cantidad);
-              item.valorInvalido = await valValor(item.valor);
-
-              let pesoInvalido = await valCantidad(item.peso);
-              if (pesoInvalido) {
-                item.peso = "0";
-              }
-
-              data.push(item);
+            let pesoInvalido = await valCantidad(item.peso);
+            if (pesoInvalido) {
+              item.peso = "0";
             }
+
+            data.push(item);
           }
         }
       }
     }
-
-    dataPacking = await getPackingList(ocr, ocrPL, paginasPackingList);
-
-    try {
-      await imp_importacion_archivo.update(
-        {
-          detalles: JSON.stringify(data),
-          packingList: JSON.stringify(dataPacking),
-        },
-        { where: { nroDespacho: nroDespacho } }
-      );
-    } catch (error) {
-      console.log(error);
-    }
   }
+  return data;
 };
 
-const getPackingList = async (ocr, ocrPL, paginasPackingList) => {
+const procesaPackingList = async (paginasPackingList, ocr, ocrPL) => {
   let dataPacking = [];
   for (let [j, pagina] of paginasPackingList.entries()) {
     let tabla = ocr.ParsedResults[pagina].ParsedText.split("\n");
@@ -138,54 +120,39 @@ const getPackingList = async (ocr, ocrPL, paginasPackingList) => {
 
     for (let [i, e] of tabla.entries()) {
       let texto = e.toUpperCase();
-      if (texto.includes("CONTAINER")) {
-        let indInicio = i;
+      if (
+        texto.includes("CAJAS") &&
+        texto.includes("NETO") &&
+        texto.includes("BRUTO")
+      ) {
+        let indInicio = i + 1;
         for (let k = indInicio; k < indInicio + 100; k++) {
           if (k >= tabla.length - 1) {
             break;
           }
 
+          if (tabla[k].includes("TOTAL")) {
+            break;
+          }
+
           let lineaMas0 = tabla[k].replace().split("\t");
-          let vencimiento = "";
 
-          if (lineaMas0.length > 7) {
-            let fechaEncontrada = "";
-            for (let l = lineaMas0.length - 1; l >= 0; l--) {
-              let posibleFecha = lineaMas0[l].trim();
-              if (
-                /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/\d{4}$/.test(
-                  posibleFecha
-                )
-              ) {
-                fechaEncontrada = posibleFecha;
-                break;
-              }
-            }
-            vencimiento = fechaEncontrada;
-          }
+          let campos = lineaMas0.filter((item) => !item.includes("\r"));
 
-          if (vencimiento.length > 0) {
-            let partesFecha = vencimiento.split("/");
-            if (partesFecha.length === 3) {
-              vencimiento = `${partesFecha[2]}/${partesFecha[0].padStart(
-                2,
-                "0"
-              )}/${partesFecha[1].padStart(2, "0")}`;
-            }
-          }
+          let vencimiento = await getVencimiento(tabla);
 
-          if (vencimiento.length > 0) {
+          if (campos.length >= 4) {
             let itemPL = {
-              descripcion: "ITEM DESCRIPTION",
+              descripcion: campos[0].slice(0, 15),
               fechaProduccion: "",
               sif: "1",
               fechaVencimiento: vencimiento,
-              CajasPallet: "1",
-              PesoNeto: "1",
-              PesoBruto: "1",
+              CajasPallet: limpiarTexto(campos[1]),
+              PesoNeto: limpiarTexto(campos[2]),
+              PesoBruto: limpiarTexto(campos[3]),
               vencimientoInvalido: await valFecha(vencimiento),
-              pesonetoInvalido: false,
-              pesobrutoInvalido: false,
+              pesonetoInvalido: await valValor(limpiarTexto(campos[2])),
+              pesobrutoInvalido: await valValor(limpiarTexto(campos[3])),
             };
             dataPacking.push(itemPL);
           }
@@ -193,12 +160,45 @@ const getPackingList = async (ocr, ocrPL, paginasPackingList) => {
       }
     }
   }
+
   return dataPacking;
+};
+
+const getPeso = async (tabla) => {
+  let peso = "";
+  for (let [i, e] of tabla.entries()) {
+    let texto = e.toUpperCase();
+    if (texto.includes("PESO NETO") || texto.includes("NET WEIGHT")) {
+      let lineaMas0 = texto.replace().split("\t");
+
+      let campos = lineaMas0.filter((item) => !item.includes("\r"));
+      peso = campos[campos.length - 1].replace(/,/g, "");
+    }
+  }
+  return peso;
+};
+
+const getVencimiento = async (tabla) => {
+  let fecha = "";
+  for (let [i, e] of tabla.entries()) {
+    let texto = e.toUpperCase();
+    if (texto.includes("EXPIRA")) {
+      let lineaMas0 = texto.replace().split("\t");
+
+      let campos = lineaMas0.filter((item) => !item.includes("\r"));
+      fecha = campos[campos.length - 1].replace(/,/g, "");
+
+      let df = fecha.split("/");
+      fecha =
+        df[2] + "/" + df[1].padStart(2, "0") + "/" + df[0].padStart(2, "0");
+    }
+  }
+  return fecha;
 };
 
 function limpiarTexto(texto) {
   // Eliminar todas las comas
-  let sinComas = texto.replace(/,/g, "");
+  let sinComas = texto.replace(/[^0-9.]/g, "");
 
   // Encontrar la última aparición de un punto
   const ultimaPosicionPunto = sinComas.lastIndexOf(".");
