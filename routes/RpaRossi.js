@@ -13,7 +13,9 @@ const procesaOcrSeara = require("../middleware/procesaOcrSeara");
 const procesaOcrJBS = require("../middleware/procesaOcrJBS");
 const procesaOcrSWIFT = require("../middleware/procesaOcrSWIFT");
 const procesaOcrPILGRIMS = require("../middleware/procesaOcrPILGRIMS");
-const procesaOcrMANTIQUEIRA = require("../middleware/procesaOcrMANTEQUIERA");
+const procesaOcrMANTIQUEIRA = require("../middleware/procesaOcrMANTIQUIERA");
+const procesaOcrVICTORIA = require("../middleware/procesaOcrVICTORIA");
+
 const cron = require("node-cron");
 const { ocrSpace } = require("ocr-space-api-wrapper");
 const path = require("path");
@@ -667,7 +669,14 @@ const saveArchivos = async (item) => {
           JSON.parse(item.ocrArchivoPL),
           item.nroDespacho
         );
+      } else if (dataImportacion.proveedor.toUpperCase().includes("VICTORIA")) {
+        await procesaOcrVICTORIA(
+          JSON.parse(item.ocrArchivo),
+          JSON.parse(item.ocrArchivoPL),
+          item.nroDespacho
+        );
       }
+      console.log("Guardando Archivos", item);
     }
   } catch (error) {
     console.log(error);
@@ -1192,6 +1201,39 @@ router.get("/pilgrims/:nroDespacho", cors(), async function (req, res) {
       ocr = JSON.parse(existe.ocrArchivo);
       ocrPL = JSON.parse(existe.ocrArchivoPL);
       await procesaOcrPILGRIMS(ocr, ocrPL, nroDespacho);
+
+      res.send({
+        error: false,
+        message: "OCR as good as possible",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.send({
+      error: true,
+      message: "Error en la consulta",
+    });
+  }
+});
+
+router.get("/victoria/:nroDespacho", cors(), async function (req, res) {
+  let nroDespacho = req.params.nroDespacho;
+
+  let ocr = "";
+  let ocrPL = "";
+  try {
+    let existe = await imp_importacion_archivo.findOne({
+      where: { nroDespacho: nroDespacho },
+    });
+    if (!existe) {
+      res.send({
+        error: true,
+        message: "No existe el despacho",
+      });
+    } else {
+      ocr = JSON.parse(existe.ocrArchivo);
+      ocrPL = JSON.parse(existe.ocrArchivoPL);
+      await procesaOcrVICTORIA(ocr, ocrPL, nroDespacho);
 
       res.send({
         error: false,
