@@ -24,6 +24,7 @@ const permisos = {
 
 router.options("*", async function (req, res) {
   showLog(req, res);
+
   res.set("Access-Control-Allow-Origin", permisos.origin);
   res.set("Access-Control-Allow-Methods", permisos.methods);
   res.set("Access-Control-Allow-Headers", permisos.allowedHeaders);

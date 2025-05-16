@@ -16,6 +16,17 @@ app.use(
 app.use(expressSanitizer());
 app.use(express.json());
 
+const allowedOrigins = ["http://localhost:5173", "http://152.230.104.83:3000/"];
+app.use((req, res, next) => {
+  const origin = req.get("Origin");
+  if (process.env.CERRAR_APIS === "SI") {
+    if (!origin || !allowedOrigins.includes(origin)) {
+      return res.status(403).send("Origen no permitido");
+    }
+  }
+  next();
+});
+
 var sequelize = require("./models/sequelizeConnection");
 var task = require("./models/task");
 
