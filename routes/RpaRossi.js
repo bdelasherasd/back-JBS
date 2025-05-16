@@ -336,6 +336,23 @@ const getObjeto = async (xpath) => {
   }
 };
 
+const getObjeto1 = async (xpath) => {
+  var countTryes = 0;
+  var maxTryes = 1;
+  while (countTryes < maxTryes) {
+    try {
+      var e = await driver.wait(until.elementLocated(By.xpath(xpath)), 1000);
+      return e;
+    } catch (e) {
+      console.log("Esperando objeto ", xpath);
+      countTryes++;
+      if (countTryes == maxTryes) {
+        return null;
+      }
+    }
+  }
+};
+
 const procesaDetalles = async (nroDespacho) => {
   console.log("Inicio Ejecución Programada RPA Rossi", nroDespacho);
 
@@ -693,7 +710,7 @@ const procesaVentanaGastos = async (nroDespacho) => {
   var nroFacturaText = "";
   var fechaFacturaText = "";
 
-  var nroFactura = await getObjeto(
+  var nroFactura = await getObjeto1(
     '//*[@id="tResumen"]/div[1]/div[1]/dl/dd[7]/dl/dd[1]'
   );
   if (nroFactura != null) {
@@ -712,6 +729,15 @@ const procesaVentanaGastos = async (nroDespacho) => {
   var fechaMatch = t.match(/\d{2}-\d{2}-\d{4}/);
   if (fechaMatch) {
     fechaGuiaText = fechaMatch[0];
+  }
+
+  var fechaPagoText = "";
+  var grupoDetalle = await getObjeto('//*[@id="tResumen"]/div[1]');
+  var grupoDetalleHTML = await grupoDetalle.getAttribute("innerHTML");
+  var t = grupoDetalleHTML.split("Fecha de Pago")[1];
+  var fechaMatch = t.match(/\d{2}-\d{2}-\d{4}/);
+  if (fechaMatch) {
+    fechaPagoText = fechaMatch[0];
   }
 
   while (true) {
@@ -764,6 +790,7 @@ const procesaVentanaGastos = async (nroDespacho) => {
       nroFactura: "",
       fechaFactura: "",
       fechaGuia: fechaGuiaText,
+      fechaPago: fechaPagoText,
       gastosAgencia: JSON.stringify([]),
       desembolsosAgencia: JSON.stringify([]),
     };
@@ -980,6 +1007,7 @@ const procesaVentanaGastos = async (nroDespacho) => {
     nroFactura: nroFacturaText,
     fechaFactura: fechaFacturaText,
     fechaGuia: fechaGuiaText,
+    fechaPago: fechaPagoText,
     gastosAgencia: JSON.stringify(gastosAgencia),
     desembolsosAgencia: JSON.stringify(desembolsos),
   };
