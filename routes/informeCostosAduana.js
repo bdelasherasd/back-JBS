@@ -45,7 +45,8 @@ router.get("/list/:ano", cors(), async function (req, res) {
   sql += "convert(float,replace(b.tipocambio,',','.')) tipocambio, ";
   sql += "d.valor dolarObservado, ";
   sql += "b.valorCif [USD Importacion], ";
-  sql += "b.valorCif*d.valor [CLP Importacion], ";
+  sql +=
+    "b.valorCif*convert(float,replace(b.tipocambio,',','.'))  [CLP Importacion], ";
   sql +=
     "CONVERT(decimal,REPLACE(RTRIM(isnull([valorIvaGcp],'0')),'.',''))  Gcp, ";
   sql += "b.gastosAgencia, ";
@@ -63,6 +64,7 @@ router.get("/list/:ano", cors(), async function (req, res) {
     data = data[0];
     if (data.length > 0) {
       for (let [i, item] of data.entries()) {
+        data[i]["Proteina"] = await getProteina(item.mercaderia);
         let gastos = JSON.parse(item.gastosAgencia);
         let desembolsos = JSON.parse(item.desembolsosAgencia);
         let gastosAgencia = 0;
@@ -70,17 +72,24 @@ router.get("/list/:ano", cors(), async function (req, res) {
         for (let gasto of gastos) {
           gastosAgencia += parseFloat(gasto.valor.replace(".", ""));
         }
+        let iva = 0;
         for (let desembolso of desembolsos) {
           desembolsosAgencia += parseFloat(desembolso.valor.replace(".", ""));
+          if (!desembolso.nombreGasto.toUpperCase().includes("SEREMI")) {
+            iva += parseFloat(desembolso.valor.replace(".", ""));
+          }
         }
-        data[i]["TotalgastosAgencia"] = gastosAgencia;
-        data[i]["IVA"] = Math.round(gastosAgencia * 0.19);
-        data[i]["TotaldesembolsosAgencia"] = desembolsosAgencia;
-        data[i]["TotalLiquidacionAgencia"] =
-          desembolsosAgencia +
-          gastosAgencia +
-          Math.round(gastosAgencia * 0.19) +
-          item.Gcp;
+        iva = Math.round(iva - iva / 1.19);
+        data[i]["CostoBruto"] = desembolsosAgencia;
+        data[i]["CostoAduana"] = gastosAgencia;
+        data[i]["IVA"] = iva;
+        data[i]["TipoTransporte"] = item.tipoTranporte;
+        data[i]["CostoImportacionNeto"] =
+          desembolsosAgencia + gastosAgencia + iva;
+        data[i]["% Importacion"] = redondear(
+          (data[i]["CostoImportacionNeto"] / item["CLP Importacion"]) * 100,
+          2
+        );
       }
 
       data.forEach((e) => {
@@ -96,5 +105,27 @@ router.get("/list/:ano", cors(), async function (req, res) {
     console.log(error.message);
   }
 });
+
+const getProteina = async (mercaderia) => {
+  if (mercaderia.toUpperCase().includes("POLLO")) {
+    return "POLLO";
+  } else if (mercaderia.toUpperCase().includes("CERDO")) {
+    return "CERDO";
+  } else if (mercaderia.toUpperCase().includes("VACUNO")) {
+    return "VACUNO";
+  } else {
+    return "OTRO";
+  }
+};
+
+function redondear(num, decimales = 2) {
+  if (typeof num !== "number" || typeof decimales !== "number") {
+    throw new TypeError("Ambos argumentos deben ser números");
+  }
+
+  const factor = Math.pow(10, decimales);
+  // Usamos Number.EPSILON para evitar errores de precisión como en 1.005
+  return Math.round((num + Number.EPSILON) * factor) / factor;
+}
 
 module.exports = router;

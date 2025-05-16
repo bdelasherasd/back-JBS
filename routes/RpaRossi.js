@@ -13,6 +13,7 @@ const procesaOcrSeara = require("../middleware/procesaOcrSeara");
 const procesaOcrJBS = require("../middleware/procesaOcrJBS");
 const procesaOcrSWIFT = require("../middleware/procesaOcrSWIFT");
 const procesaOcrPILGRIMS = require("../middleware/procesaOcrPILGRIMS");
+const procesaOcrMANTIQUEIRA = require("../middleware/procesaOcrMANTEQUIERA");
 const cron = require("node-cron");
 const { ocrSpace } = require("ocr-space-api-wrapper");
 const path = require("path");
@@ -179,8 +180,8 @@ var reprograma = function (taskdata, idTask) {
   global.tjobs.push({ id: idTask, job: job });
 };
 
-router.get("/procesaAhora/:referencia", cors(), async function (req, res) {
-  procesaAgenda(req, res, { referencia: req.params.referencia });
+router.get("/procesaAhora/:nroDespacho", cors(), async function (req, res) {
+  procesaAgenda(req, res, { nroDespacho: req.params.nroDespacho });
 });
 
 router.get("/procesaLote/:fechaDesde", cors(), async function (req, res) {
@@ -245,7 +246,7 @@ const procesaAgenda = async (req, res, taskdata) => {
   if (taskdata.referencia == "lote") {
     await procesaDetallesLote(taskdata.fechaDesde);
   } else {
-    await procesaDetalles(taskdata.referencia);
+    await procesaDetalles(taskdata.nroDespacho);
   }
 
   await driver.quit();
@@ -335,8 +336,8 @@ const getObjeto = async (xpath) => {
   }
 };
 
-const procesaDetalles = async (referencia) => {
-  console.log("Inicio Ejecución Programada RPA Rossi", referencia);
+const procesaDetalles = async (nroDespacho) => {
+  console.log("Inicio Ejecución Programada RPA Rossi", nroDespacho);
 
   var numref = null;
   while (true) {
@@ -348,12 +349,12 @@ const procesaDetalles = async (referencia) => {
         await numref.sendKeys(Key.CONTROL, "a", Key.DELETE);
       }
 
-      await numref.sendKeys(referencia + Key.TAB);
+      await numref.sendKeys(nroDespacho + Key.TAB);
       break;
     } catch (e) {
       numref = await driver.wait(
         until.elementLocated(
-          By.xpath('//*[@id="exportar"]/fieldset/div[10]/input')
+          By.xpath('//*[@id="exportar"]/fieldset/div[1]/input')
         ),
         20000
       );
@@ -637,6 +638,14 @@ const saveArchivos = async (item) => {
         );
       } else if (dataImportacion.proveedor.toUpperCase().includes("PILGRIMS")) {
         await procesaOcrPILGRIMS(
+          JSON.parse(item.ocrArchivo),
+          JSON.parse(item.ocrArchivoPL),
+          item.nroDespacho
+        );
+      } else if (
+        dataImportacion.proveedor.toUpperCase().includes("MANTIQUEIRA")
+      ) {
+        await procesaOcrMANTIQUEIRA(
           JSON.parse(item.ocrArchivo),
           JSON.parse(item.ocrArchivoPL),
           item.nroDespacho
@@ -1089,6 +1098,39 @@ router.get("/swift/:nroDespacho", cors(), async function (req, res) {
       ocr = JSON.parse(existe.ocrArchivo);
       ocrPL = JSON.parse(existe.ocrArchivoPL);
       await procesaOcrSWIFT(ocr, ocrPL, nroDespacho);
+
+      res.send({
+        error: false,
+        message: "OCR as good as possible",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.send({
+      error: true,
+      message: "Error en la consulta",
+    });
+  }
+});
+
+router.get("/mantiqueira/:nroDespacho", cors(), async function (req, res) {
+  let nroDespacho = req.params.nroDespacho;
+
+  let ocr = "";
+  let ocrPL = "";
+  try {
+    let existe = await imp_importacion_archivo.findOne({
+      where: { nroDespacho: nroDespacho },
+    });
+    if (!existe) {
+      res.send({
+        error: true,
+        message: "No existe el despacho",
+      });
+    } else {
+      ocr = JSON.parse(existe.ocrArchivo);
+      ocrPL = JSON.parse(existe.ocrArchivoPL);
+      await procesaOcrMANTIQUEIRA(ocr, ocrPL, nroDespacho);
 
       res.send({
         error: false,
