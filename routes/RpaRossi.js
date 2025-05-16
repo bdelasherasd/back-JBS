@@ -287,7 +287,7 @@ const procesaDetallesLote = async (fechaDesde) => {
   console.log("Despachos", despachos);
 
   for (let [i, e] of despachos.entries()) {
-    await procesaDetalles(e.referencia);
+    await procesaDetalles(e.despacho);
     // let existe = await imp_importacion_archivo.findOne({
     //   where: { nroDespacho: e.despacho },
     // });
