@@ -70,13 +70,15 @@ router.get("/list/:ano", cors(), async function (req, res) {
         let gastosAgencia = 0;
         let desembolsosAgencia = 0;
         for (let gasto of gastos) {
-          gastosAgencia += parseFloat(gasto.valor.replace(".", ""));
+          gastosAgencia += parseFloat(gasto.valor.replace("/./g", ""));
         }
         let iva = 0;
         for (let desembolso of desembolsos) {
-          desembolsosAgencia += parseFloat(desembolso.valor.replace(".", ""));
+          desembolsosAgencia += parseFloat(
+            desembolso.valor.replace("/./g", "")
+          );
           if (!desembolso.nombreGasto.toUpperCase().includes("SEREMI")) {
-            iva += parseFloat(desembolso.valor.replace(".", ""));
+            iva += parseFloat(desembolso.valor.replace("/./g", ""));
           }
         }
         iva = Math.round(iva - iva / 1.19);
