@@ -85,7 +85,7 @@ router.get("/list/:ano", cors(), async function (req, res) {
         data[i]["IVA"] = iva;
         data[i]["TipoTransporte"] = item.tipoTranporte;
         data[i]["CostoImportacionNeto"] =
-          desembolsosAgencia + gastosAgencia + iva;
+          desembolsosAgencia + gastosAgencia - iva;
         data[i]["% Importacion"] = redondear(
           (data[i]["CostoImportacionNeto"] / item["CLP Importacion"]) * 100,
           2
