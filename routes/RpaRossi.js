@@ -333,11 +333,15 @@ const procesaCsv = async (filePath) => {
 };
 
 const getObjeto = async (xpath) => {
+  const randomNumber = Math.floor(Math.random() * (2000 - 1500 + 1)) + 1500;
   var countTryes = 0;
   var maxTryes = 10;
   while (countTryes < maxTryes) {
     try {
-      var e = await driver.wait(until.elementLocated(By.xpath(xpath)), 2000);
+      var e = await driver.wait(
+        until.elementLocated(By.xpath(xpath)),
+        randomNumber
+      );
       return e;
     } catch (e) {
       console.log("Esperando objeto ", xpath);
@@ -739,8 +743,10 @@ const procesaVentanaGastos = async (nroDespacho) => {
 
   var nroFacturaText = "";
   var fechaFacturaText = "";
+
   var grupoDetalle = await getObjeto('//*[@id="tResumen"]/div[1]');
   var grupoDetalleHTML = await grupoDetalle.getAttribute("innerHTML");
+
   var t = grupoDetalleHTML.split("Factura")[1].split("Notas de Cobro")[0];
   var fechaMatch = t.match(/\d{2}-\d{2}-\d{4}/);
   if (fechaMatch) {
@@ -753,8 +759,6 @@ const procesaVentanaGastos = async (nroDespacho) => {
   console.log("Nro Factura", nroFacturaText, "Fecha Factura", fechaFacturaText);
 
   var fechaGuiaText = "";
-  var grupoDetalle = await getObjeto('//*[@id="tResumen"]/div[1]');
-  var grupoDetalleHTML = await grupoDetalle.getAttribute("innerHTML");
   var t = grupoDetalleHTML.split("Guía de Despacho")[1].split("Facturas")[0];
   var fechaMatch = t.match(/\d{2}-\d{2}-\d{4}/);
   if (fechaMatch) {
@@ -764,8 +768,6 @@ const procesaVentanaGastos = async (nroDespacho) => {
   console.log("Fecha Guia", fechaGuiaText);
 
   var fechaPagoText = "";
-  var grupoDetalle = await getObjeto('//*[@id="tResumen"]/div[1]');
-  var grupoDetalleHTML = await grupoDetalle.getAttribute("innerHTML");
   var t = grupoDetalleHTML
     .split("Fecha de Pago")[1]
     .split("Fecha de Retiro")[0];
@@ -794,12 +796,15 @@ const procesaVentanaGastos = async (nroDespacho) => {
 
   var noFacturado = "";
   try {
+    const randomNumber = Math.floor(Math.random() * (2000 - 1500 + 1)) + 1500;
+    console.log("Esperando si hay gastos", randomNumber);
+
     var noFacturado = await driver
       .wait(
         until.elementLocated(
           By.xpath('//*[@id="contenedor-costo"]/div/div/p[2]')
         ),
-        4000
+        randomNumber
       )
       .getText();
   } catch (error) {
