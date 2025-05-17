@@ -262,7 +262,7 @@ const procesaDetallesLote = async (fechaDesde) => {
   var btn = await getObjeto('//*[@id="tabla_wrapper"]/div[1]/div[2]/button/i');
   await btn.click();
 
-  await driver.sleep(5000);
+  await driver.sleep(2000);
 
   var fileName = await obtenerCsvMasNuevo(downloadDir);
   var filePath = path.join(downloadDir, fileName);
@@ -521,8 +521,8 @@ const procesaDetalles = async (nroDespacho) => {
     sublinea++;
   }
 
-  console.log("Esperando 3 segundos");
-  await driver.sleep(3000);
+  console.log("Esperando 2 segundos");
+  await driver.sleep(2000);
 };
 
 const saveImportacion = async (item) => {
@@ -753,7 +753,7 @@ const procesaVentanaGastos = async (nroDespacho) => {
   var fechaGuiaText = "";
   var grupoDetalle = await getObjeto('//*[@id="tResumen"]/div[1]');
   var grupoDetalleHTML = await grupoDetalle.getAttribute("innerHTML");
-  var t = grupoDetalleHTML.split("Guía de Despacho")[1];
+  var t = grupoDetalleHTML.split("Guía de Despacho")[1].split("Facturas")[0];
   var fechaMatch = t.match(/\d{2}-\d{2}-\d{4}/);
   if (fechaMatch) {
     fechaGuiaText = fechaMatch[0];
@@ -762,7 +762,9 @@ const procesaVentanaGastos = async (nroDespacho) => {
   var fechaPagoText = "";
   var grupoDetalle = await getObjeto('//*[@id="tResumen"]/div[1]');
   var grupoDetalleHTML = await grupoDetalle.getAttribute("innerHTML");
-  var t = grupoDetalleHTML.split("Fecha de Pago")[1];
+  var t = grupoDetalleHTML
+    .split("Fecha de Pago")[1]
+    .split("Fecha de Retiro")[0];
   var fechaMatch = t.match(/\d{2}-\d{2}-\d{4}/);
   if (fechaMatch) {
     fechaPagoText = fechaMatch[0];
