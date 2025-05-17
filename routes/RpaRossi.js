@@ -203,7 +203,8 @@ const options = new Options()
   .setPreference("browser.helperApps.neverAsk.saveToDisk", "application/pdf")
   .setPreference("pdfjs.disabled", true)
   .setPreference("browser.download.manager.showWhenStarting", false)
-  .setAcceptInsecureCerts(true);
+  .setAcceptInsecureCerts(true)
+  .headless();
 
 var URLEMPRESA = "https://impo-piero.rossi.cl/login";
 var logText = "";
@@ -252,6 +253,8 @@ const procesaAgenda = async (req, res, taskdata) => {
   }
 
   await driver.quit();
+
+  console.log("Fin Ejecución Programada RPA Rossi");
   res.send({
     error: false,
     message: "Fin Ejecución Programada RPA Rossi",
@@ -484,7 +487,7 @@ const procesaDetalles = async (nroDespacho) => {
       puertoDescarga: puertoDescarga,
     };
     await saveImportacion(item);
-    console.log("Guardando Importacion", item);
+    console.log("Guardando Importacion", nroDespacho);
 
     var btn = "";
     if (subtabla.length == 1) {
@@ -725,18 +728,6 @@ async function obtenerCsvMasNuevo(directorio) {
 const procesaVentanaGastos = async (nroDespacho) => {
   var tabGastos = null;
 
-  // var nroFactura = await getObjeto1(
-  //   '//*[@id="tResumen"]/div[1]/div[1]/dl/dd[7]/dl/dd[1]'
-  // );
-  // if (nroFactura != null) {
-  //   var nroFacturaText = await nroFactura.getText();
-
-  //   var fechaFactura = await getObjeto(
-  //     '//*[@id="tResumen"]/div[1]/div[1]/dl/dd[7]/dl/dd[2]'
-  //   );
-  //   var fechaFacturaText = await fechaFactura.getText();
-  // }
-
   var nroFacturaText = "";
   var fechaFacturaText = "";
   var grupoDetalle = await getObjeto('//*[@id="tResumen"]/div[1]');
@@ -770,6 +761,8 @@ const procesaVentanaGastos = async (nroDespacho) => {
     fechaPagoText = fechaMatch[0];
   }
 
+  console.log("Fecha Pago", fechaPagoText);
+
   while (true) {
     try {
       tabGastos = await driver.wait(
@@ -784,7 +777,7 @@ const procesaVentanaGastos = async (nroDespacho) => {
     }
   }
 
-  await driver.sleep(2000);
+  await driver.sleep(3000);
 
   var noFacturado = "";
   try {
@@ -817,8 +810,8 @@ const procesaVentanaGastos = async (nroDespacho) => {
       AdValorem: "",
       MonedaAlmacenaje: "",
       Almacenaje: "",
-      nroFactura: "",
-      fechaFactura: "",
+      nroFactura: nroFacturaText,
+      fechaFactura: fechaFacturaText,
       fechaGuia: fechaGuiaText,
       fechaPago: fechaPagoText,
       gastosAgencia: JSON.stringify([]),
@@ -1043,7 +1036,7 @@ const procesaVentanaGastos = async (nroDespacho) => {
   };
   await saveGastos(item);
 
-  console.log("Esperando 5 segundos");
+  console.log("Guardando Gastos", nDesp);
 };
 
 const getIdImportacion = async (nroDespachoI) => {
