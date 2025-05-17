@@ -323,10 +323,10 @@ const procesaCsv = async (filePath) => {
 
 const getObjeto = async (xpath) => {
   var countTryes = 0;
-  var maxTryes = 4;
+  var maxTryes = 10;
   while (countTryes < maxTryes) {
     try {
-      var e = await driver.wait(until.elementLocated(By.xpath(xpath)), 1000);
+      var e = await driver.wait(until.elementLocated(By.xpath(xpath)), 2000);
       return e;
     } catch (e) {
       console.log("Esperando objeto ", xpath);
