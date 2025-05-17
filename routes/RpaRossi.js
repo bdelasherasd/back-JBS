@@ -203,8 +203,7 @@ const options = new Options()
   .setPreference("browser.helperApps.neverAsk.saveToDisk", "application/pdf")
   .setPreference("pdfjs.disabled", true)
   .setPreference("browser.download.manager.showWhenStarting", false)
-  .setAcceptInsecureCerts(true)
-  .headless();
+  .setAcceptInsecureCerts(true);
 
 var URLEMPRESA = "https://impo-piero.rossi.cl/login";
 var logText = "";
