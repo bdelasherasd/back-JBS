@@ -390,8 +390,10 @@ const procesaDetalles = async (nroDespacho) => {
       );
     }
   }
-
-  await driver.sleep(2000);
+  // Generar un número aleatorio entre 1500 y 2000
+  const randomNumber = Math.floor(Math.random() * (2000 - 1500 + 1)) + 1500;
+  console.log("Esperando ", randomNumber);
+  await driver.sleep(randomNumber);
 
   while (true) {
     try {
@@ -510,7 +512,10 @@ const procesaDetalles = async (nroDespacho) => {
       );
     }
     await btn.click();
-    await driver.sleep(2000);
+
+    const randomNumber = Math.floor(Math.random() * (2000 - 1500 + 1)) + 1500;
+    console.log("Esperando ", randomNumber);
+    await driver.sleep(randomNumber);
 
     console.log("Inicio Ventana Gastos", nroDespacho);
     await procesaVentanaGastos(item.nroDespacho);
@@ -729,6 +734,8 @@ async function obtenerCsvMasNuevo(directorio) {
 
 const procesaVentanaGastos = async (nroDespacho) => {
   var tabGastos = null;
+
+  console.log("Inicio Busca datos Factura", nroDespacho);
 
   var nroFacturaText = "";
   var fechaFacturaText = "";
