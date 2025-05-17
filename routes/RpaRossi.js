@@ -719,17 +719,17 @@ const procesaVentanaGastos = async (nroDespacho) => {
   var nroFacturaText = "";
   var fechaFacturaText = "";
 
-  var nroFactura = await getObjeto1(
-    '//*[@id="tResumen"]/div[1]/div[1]/dl/dd[7]/dl/dd[1]'
-  );
-  if (nroFactura != null) {
-    var nroFacturaText = await nroFactura.getText();
+  // var nroFactura = await getObjeto1(
+  //   '//*[@id="tResumen"]/div[1]/div[1]/dl/dd[7]/dl/dd[1]'
+  // );
+  // if (nroFactura != null) {
+  //   var nroFacturaText = await nroFactura.getText();
 
-    var fechaFactura = await getObjeto(
-      '//*[@id="tResumen"]/div[1]/div[1]/dl/dd[7]/dl/dd[2]'
-    );
-    var fechaFacturaText = await fechaFactura.getText();
-  }
+  //   var fechaFactura = await getObjeto(
+  //     '//*[@id="tResumen"]/div[1]/div[1]/dl/dd[7]/dl/dd[2]'
+  //   );
+  //   var fechaFacturaText = await fechaFactura.getText();
+  // }
 
   var fechaGuiaText = "";
   var grupoDetalle = await getObjeto('//*[@id="tResumen"]/div[1]');
