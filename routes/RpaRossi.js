@@ -288,6 +288,15 @@ const procesaDetallesLote = async (fechaDesde) => {
   }
   console.log("Despachos", despachos);
 
+  despachos.sort((a, b) => {
+    // Convert to numbers if possible, otherwise compare as strings
+    const da = isNaN(a.despacho) ? a.despacho : Number(a.despacho);
+    const db = isNaN(b.despacho) ? b.despacho : Number(b.despacho);
+    if (da < db) return 1;
+    if (da > db) return -1;
+    return 0;
+  });
+
   for (let [i, e] of despachos.entries()) {
     await procesaDetalles(e.despacho);
     // let existe = await imp_importacion_archivo.findOne({
@@ -716,9 +725,6 @@ async function obtenerCsvMasNuevo(directorio) {
 const procesaVentanaGastos = async (nroDespacho) => {
   var tabGastos = null;
 
-  var nroFacturaText = "";
-  var fechaFacturaText = "";
-
   // var nroFactura = await getObjeto1(
   //   '//*[@id="tResumen"]/div[1]/div[1]/dl/dd[7]/dl/dd[1]'
   // );
@@ -730,6 +736,19 @@ const procesaVentanaGastos = async (nroDespacho) => {
   //   );
   //   var fechaFacturaText = await fechaFactura.getText();
   // }
+
+  var nroFacturaText = "";
+  var fechaFacturaText = "";
+  var grupoDetalle = await getObjeto('//*[@id="tResumen"]/div[1]');
+  var grupoDetalleHTML = await grupoDetalle.getAttribute("innerHTML");
+  var t = grupoDetalleHTML.split("Factura")[1].split("Notas de Cobro")[0];
+  var fechaMatch = t.match(/\d{2}-\d{2}-\d{4}/);
+  if (fechaMatch) {
+    fechaFacturaText = fechaMatch[0];
+    var tabgrp = t.replace(/\t/g, "").split("\n");
+    let indiceNumero = tabgrp.findIndex((linea) => linea.includes("Número"));
+    var nroFacturaText = tabgrp[indiceNumero + 2].trim();
+  }
 
   var fechaGuiaText = "";
   var grupoDetalle = await getObjeto('//*[@id="tResumen"]/div[1]');
