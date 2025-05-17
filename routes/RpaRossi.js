@@ -512,7 +512,10 @@ const procesaDetalles = async (nroDespacho) => {
     await btn.click();
     await driver.sleep(2000);
 
+    console.log("Inicio Ventana Gastos", nroDespacho);
     await procesaVentanaGastos(item.nroDespacho);
+
+    console.log("Inicio Ventana Doctos", nroDespacho);
     await procesaVentanaDoctos(item.nroDespacho);
 
     let btnCerrarModal = await getObjeto(
@@ -740,6 +743,8 @@ const procesaVentanaGastos = async (nroDespacho) => {
     var nroFacturaText = tabgrp[indiceNumero + 2].trim();
   }
 
+  console.log("Nro Factura", nroFacturaText, "Fecha Factura", fechaFacturaText);
+
   var fechaGuiaText = "";
   var grupoDetalle = await getObjeto('//*[@id="tResumen"]/div[1]');
   var grupoDetalleHTML = await grupoDetalle.getAttribute("innerHTML");
@@ -748,6 +753,8 @@ const procesaVentanaGastos = async (nroDespacho) => {
   if (fechaMatch) {
     fechaGuiaText = fechaMatch[0];
   }
+
+  console.log("Fecha Guia", fechaGuiaText);
 
   var fechaPagoText = "";
   var grupoDetalle = await getObjeto('//*[@id="tResumen"]/div[1]');
