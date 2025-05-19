@@ -254,10 +254,10 @@ const procesaAgenda = async (req, res, taskdata) => {
   await driver.quit();
 
   console.log("Fin Ejecución Programada RPA Rossi");
-  res.send({
-    error: false,
-    message: "Fin Ejecución Programada RPA Rossi",
-  });
+  // res.send({
+  //   error: false,
+  //   message: "Fin Ejecución Programada RPA Rossi",
+  // });
 };
 
 const procesaDetallesLote = async (fechaDesde) => {
