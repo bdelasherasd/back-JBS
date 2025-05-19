@@ -4,16 +4,16 @@ var imp_importacion_archivo = require("../models/imp_importacion_archivo");
 var imp_importacion = require("../models/imp_importacion");
 var { valCantidad, valCodigo, valFecha, valValor } = require("./validaciones");
 
-const procesaOcrVICTORIA = async (ocr, ocrPL, nroDespacho) => {
+const procesaOcrMEAT = async (ocr, ocrPL, nroDespacho) => {
   let dataImportacion = await imp_importacion.findOne({
     where: { nroDespacho: nroDespacho },
   });
   if (dataImportacion.tipoTranporte.toUpperCase() == "TERRESTRE") {
-    return procesaOcrVICTORIATerrestre(ocr, ocrPL, nroDespacho, "T");
+    return procesaOcrTerrestre(ocr, ocrPL, nroDespacho, "T");
   }
 };
 
-const procesaOcrVICTORIATerrestre = async (ocr, ocrPL, nroDespacho, tipo) => {
+const procesaOcrTerrestre = async (ocr, ocrPL, nroDespacho, tipo) => {
   //Procesa FACTURA COMERCIAL
 
   let paginasFactura = [];
@@ -28,22 +28,17 @@ const procesaOcrVICTORIATerrestre = async (ocr, ocrPL, nroDespacho, tipo) => {
   let paginasPackingList = [];
   for (let [i, e] of ocr.ParsedResults.entries()) {
     let texto = e.ParsedText.toUpperCase();
-    if (texto.includes("PACKING LIST POR PRODUCTO")) {
+    if (texto.includes("PACKING LIST") || texto.includes("PRODUCTION DATES")) {
       paginasPackingList.push(i);
     }
   }
   let dataPacking = await procesaPackingList(paginasPackingList, ocr, ocrPL);
 
-  for (let [i, e] of dataPacking.codigos.entries()) {
-    dataFactura[i].codigo = e;
-    dataFactura[i].codigoInvalido = await valCodigo(e);
-  }
-
   try {
     await imp_importacion_archivo.update(
       {
         detalles: JSON.stringify(dataFactura),
-        packingList: JSON.stringify(dataPacking.packing),
+        packingList: JSON.stringify(dataPacking),
       },
       { where: { nroDespacho: nroDespacho } }
     );
@@ -60,7 +55,11 @@ const procesaFactura = async (paginasFactura, ocr, ocrPL) => {
 
     for (let [i, e] of tabla.entries()) {
       let texto = e.toUpperCase();
-      if (texto.includes("CARTONS") && texto.includes("NETWEIGHT")) {
+      if (
+        texto.includes("DESCRIPTION") &&
+        texto.includes("PLT") &&
+        texto.includes("CASE")
+      ) {
         let indInicio = i + 1;
         for (let k = indInicio; k < indInicio + 100; k++) {
           if (k >= tabla.length - 1) {
@@ -68,14 +67,24 @@ const procesaFactura = async (paginasFactura, ocr, ocrPL) => {
           }
 
           let lineaMas0 = tabla[k].replace().split("\t");
+          let campos0 = lineaMas0.filter((item) => !item.includes("\r"));
 
-          let campos = lineaMas0.filter((item) => !item.includes("\r"));
+          let campoInvalido = await valCodigo(campos0[0]);
 
-          if (campos.length >= 5) {
-            let codigo = campos[2].slice(0, 10);
-            let cantidad = limpiarTexto2(campos[0]);
-            let valor = limpiarTexto2(campos[campos.length - 1]);
-            let peso = limpiarTexto2(campos[1]);
+          if (!campoInvalido) {
+            let lineaMas1 = tabla[k + 1].replace().split("\t");
+            let campos1 = lineaMas1.filter((item) => !item.includes("\r"));
+            let lineaMas2 = tabla[k + 2].replace().split("\t");
+            let campos2 = lineaMas2.filter((item) => !item.includes("\r"));
+            let lineaMas3 = tabla[k + 3].replace().split("\t");
+            let campos3 = lineaMas3.filter((item) => !item.includes("\r"));
+            let lineaMas4 = tabla[k + 4].replace().split("\t");
+            let campos4 = lineaMas4.filter((item) => !item.includes("\r"));
+
+            let codigo = campos0[0];
+            let cantidad = campos0[2].split(".")[0];
+            let valor = campos4[2].replace(/,/g, "");
+            let peso = campos3[1].replace(/,/g, "");
             let item = {
               cantidad: cantidad,
               codigo: codigo,
@@ -116,48 +125,69 @@ const procesaPackingList = async (paginasPackingList, ocr, ocrPL) => {
       let texto = e.toUpperCase();
 
       if (
-        texto.includes("PRODUCTO") &&
-        texto.includes("CAJAS") &&
-        texto.includes("PESO")
+        texto.includes("GOODS") &&
+        texto.includes("SIF") &&
+        texto.includes("DATE")
       ) {
         let indInicio = i + 1;
-        let indCodigo = 0;
-        for (let k = indInicio; k < tabla.length - 1; k++) {
-          let lineaMas1 = tabla[k].replace().split("\t");
-          let campos = lineaMas1.filter((item) => !item.includes("\r"));
-          if (campos.length >= 5) {
-            codigos.push(campos[0]);
+        let fechas = [];
+        for (let k = indInicio; k < tabla.length; k++) {
+          let lineaMas0 = tabla[k].replace().split("\t");
+          if (tabla[k].toUpperCase().includes("OBS:")) {
+            break;
+          }
+          let campos0 = lineaMas0.filter((item) => !item.includes("\r"));
+          let lineaMas1 = tabla[k + 1].replace().split("\t");
+          let campos1 = lineaMas1.filter((item) => !item.includes("\r"));
+
+          let t = campos1.join(" ");
+          let f = t.match(/(\d{1,2}\/\d{1,2}\/\d{2,4})/);
+          if (f) {
+            fechas.push(f[0]);
           }
         }
-      }
 
-      if (texto.includes("VALIDE")) {
-        let indInicio = i;
-        let lineaMas0 = tabla[i].replace().split("\t");
+        if (fechas.length > 0) {
+          let fechaMenor = fechas.reduce((min, curr) => {
+            let [d, m, y] = curr.split("/");
+            let date = new Date(y.length === 2 ? "20" + y : y, m - 1, d);
+            return !min || date < min ? date : min;
+          }, null);
 
-        let campos = lineaMas0.filter((item) => !item.includes("\r"));
-        let vencimiento = campos[campos.length - 2];
-        let df = vencimiento.split("/");
-        vencimiento =
-          df[2] + "/" + df[1].padStart(2, "0") + "/" + df[0].padStart(2, "0");
-        let itemPL = {
-          descripcion: "NA",
-          fechaProduccion: "",
-          sif: "1",
-          fechaVencimiento: vencimiento,
-          CajasPallet: "1",
-          PesoNeto: "1",
-          PesoBruto: "1",
-          vencimientoInvalido: await valFecha(vencimiento),
-          pesonetoInvalido: await valValor("1"),
-          pesobrutoInvalido: await valValor("1"),
-        };
-        dataPacking.push(itemPL);
+          let fechaMenorStr = "";
+          let fechaSumadaStr = "";
+          if (fechaMenor) {
+            let dd = String(fechaMenor.getDate()).padStart(2, "0");
+            let mm = String(fechaMenor.getMonth() + 1).padStart(2, "0");
+            let yyyy = fechaMenor.getFullYear();
+            fechaMenorStr = `${yyyy}/${mm}/${dd}`;
+            let fechaSumada = new Date(fechaMenor);
+
+            fechaSumada.setDate(fechaSumada.getDate() + 540);
+            let ddSumada = String(fechaSumada.getDate()).padStart(2, "0");
+            let mmSumada = String(fechaSumada.getMonth() + 1).padStart(2, "0");
+            let yyyySumada = fechaSumada.getFullYear();
+            fechaSumadaStr = `${yyyySumada}/${mmSumada}/${ddSumada}`;
+          }
+          let itemPL = {
+            descripcion: "NA",
+            fechaProduccion: "",
+            sif: "1",
+            fechaVencimiento: fechaSumadaStr,
+            CajasPallet: "1",
+            PesoNeto: "1",
+            PesoBruto: "1",
+            vencimientoInvalido: await valFecha(fechaMenorStr),
+            pesonetoInvalido: await valValor("1"),
+            pesobrutoInvalido: await valValor("1"),
+          };
+          dataPacking.push(itemPL);
+        }
       }
     }
   }
 
-  return { packing: dataPacking, codigos };
+  return dataPacking;
 };
 
 const getPeso = async (tabla) => {
@@ -246,4 +276,4 @@ const buscaCodigoValido = async (arr) => {
   return { existe, posicion, descripcion };
 };
 
-module.exports = procesaOcrVICTORIA;
+module.exports = procesaOcrMEAT;

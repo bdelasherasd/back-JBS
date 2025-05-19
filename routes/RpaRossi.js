@@ -15,6 +15,8 @@ const procesaOcrSWIFT = require("../middleware/procesaOcrSWIFT");
 const procesaOcrPILGRIMS = require("../middleware/procesaOcrPILGRIMS");
 const procesaOcrMANTIQUEIRA = require("../middleware/procesaOcrMANTIQUIERA");
 const procesaOcrVICTORIA = require("../middleware/procesaOcrVICTORIA");
+const procesaOcrBOSTON = require("../middleware/procesaOcrBOSTON");
+const procesaOcrMEAT = require("../middleware/procesaOcrMEAT");
 
 const cron = require("node-cron");
 const { ocrSpace } = require("ocr-space-api-wrapper");
@@ -215,6 +217,7 @@ var { parseFromString } = require("dom-parser");
 
 const imp_gastos_aduana = require("../models/imp_gastos_aduana");
 const { text } = require("stream/consumers");
+const { get } = require("http");
 var driver;
 
 const procesaAgenda = async (req, res, taskdata) => {
@@ -273,6 +276,8 @@ const procesaDetallesLote = async (fechaDesde) => {
 
   const despachos = [];
 
+  const despachosConFactura = await getDespachoConFactura();
+
   for (let [i, e] of results.entries()) {
     let eta = e["eta"];
     if (!eta.includes("No Ingresada") && !eta.includes("Pendiente")) {
@@ -281,10 +286,17 @@ const procesaDetallesLote = async (fechaDesde) => {
       let dia = eta.split("-")[0];
       let fecha = ano + "-" + mes + "-" + dia;
       if (fecha >= fechaDesde) {
-        despachos.push({
-          despacho: e.despacho,
-          referencia: e.referencia_cliente,
-        });
+        let existe = despachosConFactura.find(
+          (d) => d.nroDespacho == e.despacho
+        );
+        if (existe) {
+          console.log("Ya existe el despacho", e.despacho);
+        } else {
+          despachos.push({
+            despacho: e.despacho,
+            referencia: e.referencia_cliente,
+          });
+        }
       }
     }
   }
@@ -332,6 +344,12 @@ const procesaCsv = async (filePath) => {
   });
 };
 
+const getDespachoConFactura = async () => {
+  let sql = `select nroDespacho from imp_gastos_aduanas where gastosAgencia <> '[]'`;
+  let data = await sequelize.query(sql);
+  return data[0];
+};
+
 const getObjeto = async (xpath) => {
   const randomNumber = Math.floor(Math.random() * (2000 - 1500 + 1)) + 1500;
   var countTryes = 0;
@@ -342,23 +360,6 @@ const getObjeto = async (xpath) => {
         until.elementLocated(By.xpath(xpath)),
         randomNumber
       );
-      return e;
-    } catch (e) {
-      console.log("Esperando objeto ", xpath);
-      countTryes++;
-      if (countTryes == maxTryes) {
-        return null;
-      }
-    }
-  }
-};
-
-const getObjeto1 = async (xpath) => {
-  var countTryes = 0;
-  var maxTryes = 1;
-  while (countTryes < maxTryes) {
-    try {
-      var e = await driver.wait(until.elementLocated(By.xpath(xpath)), 1000);
       return e;
     } catch (e) {
       console.log("Esperando objeto ", xpath);
@@ -694,6 +695,18 @@ const saveArchivos = async (item) => {
         );
       } else if (dataImportacion.proveedor.toUpperCase().includes("VICTORIA")) {
         await procesaOcrVICTORIA(
+          JSON.parse(item.ocrArchivo),
+          JSON.parse(item.ocrArchivoPL),
+          item.nroDespacho
+        );
+      } else if (dataImportacion.proveedor.toUpperCase().includes("BOSTON")) {
+        await procesaOcrBOSTON(
+          JSON.parse(item.ocrArchivo),
+          JSON.parse(item.ocrArchivoPL),
+          item.nroDespacho
+        );
+      } else if (dataImportacion.proveedor.toUpperCase().includes("MEAT")) {
+        await procesaOcrMEAT(
           JSON.parse(item.ocrArchivo),
           JSON.parse(item.ocrArchivoPL),
           item.nroDespacho
@@ -1266,6 +1279,72 @@ router.get("/victoria/:nroDespacho", cors(), async function (req, res) {
       ocr = JSON.parse(existe.ocrArchivo);
       ocrPL = JSON.parse(existe.ocrArchivoPL);
       await procesaOcrVICTORIA(ocr, ocrPL, nroDespacho);
+
+      res.send({
+        error: false,
+        message: "OCR as good as possible",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.send({
+      error: true,
+      message: "Error en la consulta",
+    });
+  }
+});
+
+router.get("/boston/:nroDespacho", cors(), async function (req, res) {
+  let nroDespacho = req.params.nroDespacho;
+
+  let ocr = "";
+  let ocrPL = "";
+  try {
+    let existe = await imp_importacion_archivo.findOne({
+      where: { nroDespacho: nroDespacho },
+    });
+    if (!existe) {
+      res.send({
+        error: true,
+        message: "No existe el despacho",
+      });
+    } else {
+      ocr = JSON.parse(existe.ocrArchivo);
+      ocrPL = JSON.parse(existe.ocrArchivoPL);
+      await procesaOcrBOSTON(ocr, ocrPL, nroDespacho);
+
+      res.send({
+        error: false,
+        message: "OCR as good as possible",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.send({
+      error: true,
+      message: "Error en la consulta",
+    });
+  }
+});
+
+router.get("/meat/:nroDespacho", cors(), async function (req, res) {
+  let nroDespacho = req.params.nroDespacho;
+
+  let ocr = "";
+  let ocrPL = "";
+  try {
+    let existe = await imp_importacion_archivo.findOne({
+      where: { nroDespacho: nroDespacho },
+    });
+    if (!existe) {
+      res.send({
+        error: true,
+        message: "No existe el despacho",
+      });
+    } else {
+      ocr = JSON.parse(existe.ocrArchivo);
+      ocrPL = JSON.parse(existe.ocrArchivoPL);
+      await procesaOcrMEAT(ocr, ocrPL, nroDespacho);
 
       res.send({
         error: false,
