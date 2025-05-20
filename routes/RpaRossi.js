@@ -793,15 +793,21 @@ async function obtenerXlsMasNuevo(directorio) {
 const procesaVentanaGastos = async (nroDespacho) => {
   var tabGastos = null;
 
-  console.log("Inicio Busca datos Factura", nroDespacho);
+  console.log("Inicio Busca datos Factura", nroDespacho, 1);
 
   var nroFacturaText = "";
   var fechaFacturaText = "";
 
   var grupoDetalle = await getObjeto('//*[@id="tResumen"]/div[1]');
+
+  console.log("Inicio Busca datos Factura", nroDespacho, 2);
+
   var grupoDetalleHTML = await grupoDetalle.getAttribute("innerHTML");
+  console.log("Inicio Busca datos Factura", nroDespacho, 3);
 
   var t = grupoDetalleHTML.split("Factura")[1].split("Notas de Cobro")[0];
+  console.log("Inicio Busca datos Factura", nroDespacho, 4);
+
   var fechaMatch = t.match(/\d{2}-\d{2}-\d{4}/);
   if (fechaMatch) {
     fechaFacturaText = fechaMatch[0];
