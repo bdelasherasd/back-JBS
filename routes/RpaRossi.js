@@ -738,7 +738,7 @@ const saveArchivos = async (item) => {
           item.nroDespacho
         );
       }
-      console.log("Guardando Archivos", item);
+      console.log("Guardando Archivos", item.nombreArchivo);
     }
   } catch (error) {
     console.log(error);
