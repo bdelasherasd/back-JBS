@@ -379,7 +379,7 @@ const getDespachoConFactura = async () => {
 const getObjeto = async (xpath) => {
   const randomNumber = Math.floor(Math.random() * (2000 - 1500 + 1)) + 1500;
   var countTryes = 0;
-  var maxTryes = 10;
+  var maxTryes = 5;
   while (countTryes < maxTryes) {
     try {
       var e = await driver.wait(
@@ -1093,40 +1093,41 @@ const procesaVentanaGastos = async (nroDespacho) => {
 
   var tabDocDesembolsos = await getObjeto('//*[@id="myTab"]/li[5]/a/span');
   await tabDocDesembolsos.click();
+  var desembolsos = [];
 
   var excelDesembolsos = await getObjeto(
     '//*[@id="contenedor-gastos"]/div[1]/div[2]/a[1]'
   );
-  await excelDesembolsos.click();
+  if (excelDesembolsos) {
+    await excelDesembolsos.click();
 
-  var fileName = await obtenerXlsMasNuevo(downloadDir);
-  var filePath = path.join(downloadDir, fileName);
+    var fileName = await obtenerXlsMasNuevo(downloadDir);
+    var filePath = path.join(downloadDir, fileName);
 
-  const results = await procesaXls(filePath);
+    const results = await procesaXls(filePath);
 
-  var desembolsos = [];
-  for (let [i, d] of results.entries()) {
-    let afecto = false;
-    let proveedor = d.Proveedor.toUpperCase().trim();
-    let td = d.Tipo.toUpperCase().trim();
+    for (let [i, d] of results.entries()) {
+      let afecto = false;
+      let proveedor = d.Proveedor.toUpperCase().trim();
+      let td = d.Tipo.toUpperCase().trim();
 
-    if (proveedor.includes("SEREMI")) {
-      afecto = false;
-    } else if (td.includes("EXENT") || td.includes("HONORA")) {
-      afecto = false;
-    } else {
-      afecto = true;
+      if (proveedor.includes("SEREMI")) {
+        afecto = false;
+      } else if (td.includes("EXENT") || td.includes("HONORA")) {
+        afecto = false;
+      } else {
+        afecto = true;
+      }
+
+      var item = {
+        nombreGasto: `${d.Conceptos.toUpperCase().trim()} | ${proveedor}`,
+        moneda: d.Monto.trim().split(" ")[0],
+        valor: d.Monto.trim().split(" ")[2],
+        afecto: afecto,
+      };
+      desembolsos.push(item);
     }
-
-    var item = {
-      nombreGasto: `${d.Conceptos.toUpperCase().trim()} | ${proveedor}`,
-      moneda: d.Monto.trim().split(" ")[0],
-      valor: d.Monto.trim().split(" ")[2],
-      afecto: afecto,
-    };
-    desembolsos.push(item);
   }
-
   var item = {
     idImportacion: await getIdImportacion(nroDespacho),
     nroDespacho: nDesp,
