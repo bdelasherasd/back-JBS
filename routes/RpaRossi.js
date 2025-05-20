@@ -23,6 +23,7 @@ const { ocrSpace } = require("ocr-space-api-wrapper");
 const path = require("path");
 const fs = require("fs");
 const csv = require("csv-parser");
+const xlsx = require("xlsx");
 
 const bcrypt = require("bcrypt");
 var nodemailer = require("nodemailer");
@@ -185,7 +186,11 @@ var reprograma = function (taskdata, idTask) {
 };
 
 router.get("/procesaAhora/:nroDespacho", cors(), async function (req, res) {
-  procesaAgenda(req, res, { nroDespacho: req.params.nroDespacho });
+  await procesaAgenda(req, res, { nroDespacho: req.params.nroDespacho });
+  res.send({
+    error: false,
+    message: "Fin Ejecución Programada RPA Rossi",
+  });
 });
 
 router.get("/procesaLote/:fechaDesde", cors(), async function (req, res) {
@@ -338,6 +343,27 @@ const procesaCsv = async (filePath) => {
         .on("error", (err) => {
           console.error("Error leyendo el archivo:", err);
         });
+    } catch (error) {
+      console.error("Error procesando el archivo CSV:", error);
+    }
+  });
+};
+
+const procesaXls = async (filePath) => {
+  const results = [];
+
+  return new Promise((resolve, reject) => {
+    try {
+      if (!fs.existsSync(filePath)) {
+        throw new Error("El archivo no existe: " + filePath);
+      }
+
+      const workbook = xlsx.readFile(filePath);
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      const data = xlsx.utils.sheet_to_json(worksheet, { defval: "" }); // defval: '' para evitar "undefined"
+
+      resolve(data);
     } catch (error) {
       console.error("Error procesando el archivo CSV:", error);
     }
@@ -749,6 +775,21 @@ async function obtenerCsvMasNuevo(directorio) {
   return archivos[0].nombre;
 }
 
+async function obtenerXlsMasNuevo(directorio) {
+  const archivos = fs
+    .readdirSync(directorio)
+    .filter((f) => f.endsWith(".xls"))
+    .map((nombre) => {
+      const ruta = path.join(directorio, nombre);
+      return { nombre, mtime: fs.statSync(ruta).mtime };
+    });
+
+  if (archivos.length === 0) return null;
+
+  archivos.sort((a, b) => b.mtime - a.mtime);
+  return archivos[0].nombre;
+}
+
 const procesaVentanaGastos = async (nroDespacho) => {
   var tabGastos = null;
 
@@ -1038,6 +1079,44 @@ const procesaVentanaGastos = async (nroDespacho) => {
       nombreGasto: columnas[0].textContent.trim().replace(/\n/g, ""),
       moneda: columnas[1].textContent.trim().split(" ")[0],
       valor: columnas[1].textContent.trim().split(" ")[1],
+    };
+    desembolsos.push(item);
+  }
+
+  // rescatar tipo de documentos
+
+  var tabDocDesembolsos = await getObjeto('//*[@id="myTab"]/li[5]/a/span');
+  await tabDocDesembolsos.click();
+
+  var excelDesembolsos = await getObjeto(
+    '//*[@id="contenedor-gastos"]/div[1]/div[2]/a[1]'
+  );
+  await excelDesembolsos.click();
+
+  var fileName = await obtenerXlsMasNuevo(downloadDir);
+  var filePath = path.join(downloadDir, fileName);
+
+  const results = await procesaXls(filePath);
+
+  var desembolsos = [];
+  for (let [i, d] of results.entries()) {
+    let afecto = false;
+    let proveedor = d.Proveedor.toUpperCase().trim();
+    let td = d.Tipo.toUpperCase().trim();
+
+    if (proveedor.includes("SEREMI")) {
+      afecto = false;
+    } else if (td.includes("EXENT") || td.includes("HONORA")) {
+      afecto = false;
+    } else {
+      afecto = true;
+    }
+
+    var item = {
+      nombreGasto: `${d.Conceptos.toUpperCase().trim()} | ${proveedor}`,
+      moneda: d.Monto.trim().split(" ")[0],
+      valor: d.Monto.trim().split(" ")[2],
+      afecto: afecto,
     };
     desembolsos.push(item);
   }
