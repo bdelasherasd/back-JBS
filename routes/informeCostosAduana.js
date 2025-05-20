@@ -79,7 +79,8 @@ router.get("/list/:ano", cors(), async function (req, res) {
           if (
             !desembolso.nombreGasto.toUpperCase().includes("SEREMI") &&
             !desembolso.nombreGasto.toUpperCase().includes("THC") &&
-            !desembolso.nombreGasto.toUpperCase().includes("DEMURRAGE")
+            !desembolso.nombreGasto.toUpperCase().includes("DEMURRAGE") &&
+            !desembolso.nombreGasto.toUpperCase().includes("COLLECT")
           ) {
             iva += parseFloat(desembolso.valor.replace(/\./g, ""));
           }
