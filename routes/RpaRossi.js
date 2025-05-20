@@ -1062,26 +1062,26 @@ const procesaVentanaGastos = async (nroDespacho) => {
     gastosAgencia.push(item);
   }
 
-  var tablaDesembolsos = await driver.wait(
-    until.elementsLocated(
-      By.xpath('//*[@id="contenedor-costo"]/div/div/div[3]/div/div')
-    ),
-    20000
-  );
-  var desembolsos = [];
+  // var tablaDesembolsos = await driver.wait(
+  //   until.elementsLocated(
+  //     By.xpath('//*[@id="contenedor-costo"]/div/div/div[3]/div/div')
+  //   ),
+  //   20000
+  // );
+  // var desembolsos = [];
 
-  for (e of tablaDesembolsos) {
-    var sublineaHTML = await e.getAttribute("innerHTML");
-    var dom = parseFromString(sublineaHTML);
-    var columnas = dom.getElementsByTagName("div");
+  // for (e of tablaDesembolsos) {
+  //   var sublineaHTML = await e.getAttribute("innerHTML");
+  //   var dom = parseFromString(sublineaHTML);
+  //   var columnas = dom.getElementsByTagName("div");
 
-    var item = {
-      nombreGasto: columnas[0].textContent.trim().replace(/\n/g, ""),
-      moneda: columnas[1].textContent.trim().split(" ")[0],
-      valor: columnas[1].textContent.trim().split(" ")[1],
-    };
-    desembolsos.push(item);
-  }
+  //   var item = {
+  //     nombreGasto: columnas[0].textContent.trim().replace(/\n/g, ""),
+  //     moneda: columnas[1].textContent.trim().split(" ")[0],
+  //     valor: columnas[1].textContent.trim().split(" ")[1],
+  //   };
+  //   desembolsos.push(item);
+  // }
 
   // rescatar tipo de documentos
 
