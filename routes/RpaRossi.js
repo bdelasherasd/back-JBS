@@ -1111,7 +1111,7 @@ const procesaVentanaGastos = async (nroDespacho) => {
       let proveedor = d.Proveedor.toUpperCase().trim();
       let td = d.Tipo.toUpperCase().trim();
 
-      if (proveedor.includes("SEREMI") || proveedor.includes("THC")) {
+      if (proveedor.includes("SEREMI") || proveedor.includes("HAPAG")) {
         afecto = false;
       } else if (td.includes("EXENT") || td.includes("HONORA")) {
         afecto = false;
