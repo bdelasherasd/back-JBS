@@ -1133,7 +1133,11 @@ const procesaVentanaGastos = async (nroDespacho) => {
         (proveedor.includes("HAPAG") && concepto.includes("THC"))
       ) {
         afecto = false;
-      } else if (td.includes("EXENT") || td.includes("HONORA")) {
+      } else if (
+        td.includes("EXENT") ||
+        td.includes("BOLET") ||
+        td.includes("HONOR")
+      ) {
         afecto = false;
       } else {
         afecto = true;
