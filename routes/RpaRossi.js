@@ -802,7 +802,23 @@ const procesaVentanaGastos = async (nroDespacho) => {
 
   console.log("Inicio Busca datos Factura", nroDespacho, 2);
 
-  var grupoDetalleHTML = await grupoDetalle.getAttribute("innerHTML");
+  var grupoDetalleHTML = null;
+  var retryes = 0;
+  while (true) {
+    try {
+      grupoDetalleHTML = await grupoDetalle.getAttribute("innerHTML");
+      break;
+    } catch (e) {
+      retryes++;
+      if (retryes > 5) {
+        console.log("Error al obtener grupoDetalle", e);
+        break;
+      }
+      console.log("Esperando grupoDetalle");
+      await driver.sleep(1000);
+    }
+  }
+
   console.log("Inicio Busca datos Factura", nroDespacho, 3);
 
   var t = grupoDetalleHTML.split("Factura")[1].split("Notas de Cobro")[0];
