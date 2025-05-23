@@ -6,6 +6,7 @@ var task = require("../models/task");
 var sequelize = require("../models/sequelizeConnection");
 var dolarobs = require("../models/dolarobs");
 var imp_sku = require("../models/imp_sku");
+var imp_sku = require("../models/imp_csv");
 var imp_importacion = require("../models/imp_importacion");
 var imp_importacion_archivo = require("../models/imp_importacion_archivo");
 const showLog = require("../middleware/showLog");
@@ -253,6 +254,13 @@ const procesaAgenda = async (req, res, taskdata) => {
 
   await btn.click();
 
+  // Esperar a que la página esté completamente cargada
+  // Wait for the page to be fully loaded
+  await driver.wait(async () => {
+    const readyState = await driver.executeScript("return document.readyState");
+    return readyState === "complete";
+  }, 20000); // 20 segundos de tiempo máximo
+
   if (taskdata.referencia == "lote") {
     await procesaDetallesLote(taskdata.fechaDesde);
   } else {
@@ -266,6 +274,23 @@ const procesaAgenda = async (req, res, taskdata) => {
   //   error: false,
   //   message: "Fin Ejecución Programada RPA Rossi",
   // });
+};
+
+const saveCsv = async (item) => {
+  try {
+    let existe = await imp_sku.findOne({
+      where: { despacho: item.despacho },
+    });
+    if (!existe) {
+      await imp_sku.create(item);
+    } else {
+      await imp_sku.update(item, {
+        where: { despacho: item.despacho },
+      });
+    }
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 const procesaDetallesLote = async (fechaDesde) => {
@@ -297,6 +322,7 @@ const procesaDetallesLote = async (fechaDesde) => {
         if (existe) {
           console.log("Ya existe el despacho", e.despacho);
         } else {
+          await saveCsv(e);
           despachos.push({
             despacho: e.despacho,
             referencia: e.referencia_cliente,
@@ -305,7 +331,7 @@ const procesaDetallesLote = async (fechaDesde) => {
       }
     }
   }
-  console.log("Despachos", despachos);
+  console.log("Despachos registros", despachos.length);
 
   despachos.sort((a, b) => {
     // Convert to numbers if possible, otherwise compare as strings
@@ -681,7 +707,31 @@ const procesaVentanaDoctos = async (nroDespacho) => {
   console.log("Nombre Archivo", fileName);
 };
 
+const dataCsv = async (nroDespacho) => {
+  let dataCsv = await imp_csv.findOne({
+    where: { despacho: nroDespacho },
+  });
+  let tipoTransporte = "";
+  if (dataCsv) {
+    if (dataCsv.via_transporte.includes("AERE")) {
+      tipoTransporte = "Aerea";
+    } else if (dataCsv.via_transporte.includes("MARIT")) {
+      tipoTransporte = "Maritimo";
+    } else {
+      tipoTransporte = "Terrestre";
+    }
+    await imp_importacion.update(
+      {
+        tipoTranporte: tipoTransporte,
+      },
+      { where: { nroDespacho: nroDespacho } }
+    );
+  }
+};
+
 const saveArchivos = async (item) => {
+  await dataCsv(item.nroDespacho);
+
   try {
     let existe = await imp_importacion_archivo.findOne({
       where: { nroDespacho: item.nroDespacho },
@@ -1207,7 +1257,7 @@ const saveGastos = async (item) => {
 
 router.get("/seara/:nroDespacho", cors(), async function (req, res) {
   let nroDespacho = req.params.nroDespacho;
-
+  await dataCsv(nroDespacho);
   let ocr = "";
   let ocrPL = "";
   try {
@@ -1240,6 +1290,7 @@ router.get("/seara/:nroDespacho", cors(), async function (req, res) {
 
 router.get("/jbs/:nroDespacho", cors(), async function (req, res) {
   let nroDespacho = req.params.nroDespacho;
+  await dataCsv(nroDespacho);
 
   let ocr = "";
   try {
@@ -1271,6 +1322,7 @@ router.get("/jbs/:nroDespacho", cors(), async function (req, res) {
 
 router.get("/swift/:nroDespacho", cors(), async function (req, res) {
   let nroDespacho = req.params.nroDespacho;
+  await dataCsv(nroDespacho);
 
   let ocr = "";
   let ocrPL = "";
@@ -1304,6 +1356,7 @@ router.get("/swift/:nroDespacho", cors(), async function (req, res) {
 
 router.get("/mantiqueira/:nroDespacho", cors(), async function (req, res) {
   let nroDespacho = req.params.nroDespacho;
+  await dataCsv(nroDespacho);
 
   let ocr = "";
   let ocrPL = "";
@@ -1337,6 +1390,7 @@ router.get("/mantiqueira/:nroDespacho", cors(), async function (req, res) {
 
 router.get("/pilgrims/:nroDespacho", cors(), async function (req, res) {
   let nroDespacho = req.params.nroDespacho;
+  await dataCsv(nroDespacho);
 
   let ocr = "";
   let ocrPL = "";
@@ -1370,6 +1424,7 @@ router.get("/pilgrims/:nroDespacho", cors(), async function (req, res) {
 
 router.get("/victoria/:nroDespacho", cors(), async function (req, res) {
   let nroDespacho = req.params.nroDespacho;
+  await dataCsv(nroDespacho);
 
   let ocr = "";
   let ocrPL = "";
@@ -1403,6 +1458,7 @@ router.get("/victoria/:nroDespacho", cors(), async function (req, res) {
 
 router.get("/boston/:nroDespacho", cors(), async function (req, res) {
   let nroDespacho = req.params.nroDespacho;
+  await dataCsv(nroDespacho);
 
   let ocr = "";
   let ocrPL = "";
@@ -1436,6 +1492,7 @@ router.get("/boston/:nroDespacho", cors(), async function (req, res) {
 
 router.get("/meat/:nroDespacho", cors(), async function (req, res) {
   let nroDespacho = req.params.nroDespacho;
+  await dataCsv(nroDespacho);
 
   let ocr = "";
   let ocrPL = "";
