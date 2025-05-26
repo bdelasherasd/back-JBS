@@ -6,7 +6,7 @@ var task = require("../models/task");
 var sequelize = require("../models/sequelizeConnection");
 var dolarobs = require("../models/dolarobs");
 var imp_sku = require("../models/imp_sku");
-var imp_sku = require("../models/imp_csv");
+var imp_csv = require("../models/imp_csv");
 var imp_importacion = require("../models/imp_importacion");
 var imp_importacion_archivo = require("../models/imp_importacion_archivo");
 const showLog = require("../middleware/showLog");
@@ -82,6 +82,10 @@ router.post("/agenda", cors(), async function (req, res) {
           "/" +
           taskdata.dia
       );
+      const fechaInicial = new Date();
+      fechaInicial.setDate(fechaInicial.getDate() - 30);
+      const fecha = fechaInicial.toISOString().split("T")[0];
+      // (taskdata["referencia"] = "lote"), (taskdata["fechaDesde"] = fecha);
       (taskdata["referencia"] = "lote"),
         (taskdata["fechaDesde"] = process.env.FECHA_DESDE_RPA);
 
@@ -278,13 +282,13 @@ const procesaAgenda = async (req, res, taskdata) => {
 
 const saveCsv = async (item) => {
   try {
-    let existe = await imp_sku.findOne({
+    let existe = await imp_csv.findOne({
       where: { despacho: item.despacho },
     });
     if (!existe) {
-      await imp_sku.create(item);
+      await imp_csv.create(item);
     } else {
-      await imp_sku.update(item, {
+      await imp_csv.update(item, {
         where: { despacho: item.despacho },
       });
     }
@@ -708,14 +712,14 @@ const procesaVentanaDoctos = async (nroDespacho) => {
 };
 
 const dataCsv = async (nroDespacho) => {
-  let dataCsv = await imp_csv.findOne({
+  let rCsv = await imp_csv.findOne({
     where: { despacho: nroDespacho },
   });
   let tipoTransporte = "";
-  if (dataCsv) {
-    if (dataCsv.via_transporte.includes("AERE")) {
+  if (rCsv) {
+    if (rCsv.via_transporte.includes("AERE")) {
       tipoTransporte = "Aerea";
-    } else if (dataCsv.via_transporte.includes("MARIT")) {
+    } else if (rCsv.via_transporte.includes("MARIT")) {
       tipoTransporte = "Maritimo";
     } else {
       tipoTransporte = "Terrestre";
@@ -904,6 +908,14 @@ const procesaVentanaGastos = async (nroDespacho) => {
 
   console.log("Fecha Pago", fechaPagoText);
 
+  var fechaAceptacionText = "";
+  let rCsv = await imp_csv.findOne({
+    where: { despacho: nroDespacho },
+  });
+  if (rCsv) {
+    fechaAceptacionText = rCsv.fecha_aceptacion;
+  }
+
   while (true) {
     try {
       tabGastos = await driver.wait(
@@ -958,6 +970,7 @@ const procesaVentanaGastos = async (nroDespacho) => {
       fechaFactura: fechaFacturaText,
       fechaGuia: fechaGuiaText,
       fechaPago: fechaPagoText,
+      fechaAceptacion: fechaAceptacionText,
       gastosAgencia: JSON.stringify([]),
       desembolsosAgencia: JSON.stringify([]),
     };
@@ -1219,6 +1232,7 @@ const procesaVentanaGastos = async (nroDespacho) => {
     fechaFactura: fechaFacturaText,
     fechaGuia: fechaGuiaText,
     fechaPago: fechaPagoText,
+    fechaAceptacion: fechaAceptacionText,
     gastosAgencia: JSON.stringify(gastosAgencia),
     desembolsosAgencia: JSON.stringify(desembolsos),
   };

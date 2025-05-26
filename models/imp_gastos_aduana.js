@@ -27,6 +27,7 @@ var imp_gastos_aduana = sequelize.define("imp_gastos_aduana", {
   fechaFactura: type.STRING,
   fechaGuia: type.STRING,
   fechaPago: type.STRING,
+  fechaAceptacion: type.STRING,
   gastosAgencia: "[nvarchar](2048)",
   desembolsosAgencia: "[nvarchar](2048)",
 });
