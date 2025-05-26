@@ -310,7 +310,8 @@ const procesaDetallesLote = async (fechaDesde) => {
 
   const despachos = [];
 
-  const despachosConFactura = await getDespachoConFactura();
+  //const despachosConFactura = await getDespachoConFactura();
+  const despachosConFactura = [];
 
   for (let [i, e] of results.entries()) {
     let eta = e["eta"];
