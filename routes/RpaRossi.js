@@ -545,6 +545,7 @@ const procesaDetalles = async (nroDespacho) => {
       paisEmbarque: paisEmbarque,
       aduana: aduana,
       puertoDescarga: puertoDescarga,
+      estado: "0",
     };
     await saveImportacion(item);
     console.log("Guardando Importacion", nroDespacho);

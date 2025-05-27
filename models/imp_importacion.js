@@ -1,5 +1,6 @@
 var type = require("sequelize");
 var sequelize = require("./sequelizeConnection");
+const expressSanitizer = require("express-sanitizer");
 
 var imp_importacion = sequelize.define("imp_importacion", {
   idImportacion: {
@@ -19,7 +20,12 @@ var imp_importacion = sequelize.define("imp_importacion", {
   paisEmbarque: type.STRING,
   aduana: type.STRING,
   puertoDescarga: type.STRING,
+  estado: type.STRING,
+  usuarioAprueba: type.STRING,
+  fechaAprueba: type.STRING,
 });
+//sequelize.sync({ alter: true });
+
 sequelize.sync();
 
 module.exports = imp_importacion;

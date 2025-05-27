@@ -27,15 +27,33 @@ router.get("/listImportaciones", cors(), async function (req, res) {
   showLog(req, res);
 
   let sql = "";
-  sql += "select top 1000 imp_importacions.*,  ";
-  sql += "imp_importacion_archivos.detalles, ";
-  sql += "imp_importacion_archivos.packingList, ";
-  sql += "'true' as valido ";
-  sql += "from imp_importacions left join ";
+  sql += "select top 1000  ";
+  sql += "imp_importacions.idImportacion, ";
+  sql += "imp_importacions.nroDespacho, ";
+  sql += "imp_importacions.tipoTranporte, ";
+  sql += "imp_importacions.tipoOperacion, ";
+  sql += "imp_importacions.fechaETA, ";
+  sql += "imp_importacions.proveedor, ";
+  sql += "imp_importacions.regimen, ";
+  sql += "imp_importacions.refCliente, ";
+  sql += "imp_importacions.impuestoDI, ";
+  sql += "imp_importacions.puertoEmbarque, ";
+  sql += "imp_importacions.aduana, ";
+  sql += "imp_importacions.puertoDescarga, ";
+  sql += "imp_importacions.createdAt, ";
+  sql += "imp_importacions.updatedAt, ";
+  sql += "case imp_importacions.estado ";
+  sql += "when '0' then 'Ingresado' ";
+  sql += "when '1' then 'Aprobado' ";
+  sql += "end estado, ";
+  sql += "imp_importacion_archivos.detalles,  ";
+  sql += "imp_importacion_archivos.packingList,  ";
+  sql += "'true' as valido  ";
+  sql += "from imp_importacions left join  ";
+  sql += "imp_importacion_archivos on  ";
   sql +=
-    "imp_importacion_archivos on imp_importacions.idImportacion=imp_importacion_archivos.idImportacion ";
-  //sql += "where imp_importacions.nroDespacho=489079 ";
-  sql += "order by imp_importacions.idImportacion desc ";
+    "imp_importacions.idImportacion=imp_importacion_archivos.idImportacion  ";
+  sql += "order by imp_importacions.idImportacion desc  ";
 
   try {
     let data = await sequelize.query(sql);
@@ -93,6 +111,27 @@ router.get("/getImport/:id", cors(), async function (req, res) {
       },
     });
     //res.status(200).json({data})
+    res.send(data);
+  } catch (error) {
+    console.log(error.message);
+  }
+});
+
+router.post("/apruebaImportacion", cors(), async function (req, res) {
+  showLog(req, res);
+
+  let datos = {
+    idImportacion: req.sanitize(req.body.idImportacion),
+    estado: "1",
+    usuarioAprueba: req.sanitize(req.body.usuarioAprueba),
+    fechaAprueba: `${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`,
+  };
+  try {
+    let data = await imp_importacion.update(datos, {
+      where: {
+        idImportacion: datos.idImportacion,
+      },
+    });
     res.send(data);
   } catch (error) {
     console.log(error.message);
