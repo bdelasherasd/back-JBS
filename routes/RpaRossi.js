@@ -83,12 +83,9 @@ router.post("/agenda", cors(), async function (req, res) {
           taskdata.dia
       );
       const fechaInicial = new Date();
-      fechaInicial.setDate(fechaInicial.getDate() - 30);
+      fechaInicial.setDate(fechaInicial.getDate() - 45);
       const fecha = fechaInicial.toISOString().split("T")[0];
-      // (taskdata["referencia"] = "lote"), (taskdata["fechaDesde"] = fecha);
-      (taskdata["referencia"] = "lote"),
-        (taskdata["fechaDesde"] = process.env.FECHA_DESDE_RPA);
-
+      (taskdata["referencia"] = "lote"), (taskdata["fechaDesde"] = fecha);
       await procesaAgenda(req, res, taskdata);
     },
     {
