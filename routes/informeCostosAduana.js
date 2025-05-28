@@ -111,7 +111,8 @@ router.get(
 
         res.send(data);
       } else {
-        data = { error: "No hay datos" };
+        console.log("No hay datos");
+        res.send(data);
       }
     } catch (error) {
       console.log(error.message);
