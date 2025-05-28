@@ -20,7 +20,7 @@ var imp_importacion = sequelize.define("imp_importacion", {
   paisEmbarque: type.STRING,
   aduana: type.STRING,
   puertoDescarga: type.STRING,
-  estado: type.STRING,
+  estado: "varchar(10)",
   usuarioAprueba: type.STRING,
   fechaAprueba: type.STRING,
 });
