@@ -48,7 +48,7 @@ const procesaOcrPILGRIMSMaritimo = async (ocr, ocrPL, nroDespacho, tipo) => {
       let texto = e.toUpperCase();
       if (
         texto.includes("CONTAINER") ||
-        (texto.includes("DESCRIPTION") && texto.includes("PRODUCT"))
+        (texto.includes("DESCRIPTION") && texto.includes("WEIGHT"))
       ) {
         let indInicio = i;
         for (let k = indInicio; k < indInicio + 100; k++) {
@@ -61,34 +61,36 @@ const procesaOcrPILGRIMSMaritimo = async (ocr, ocrPL, nroDespacho, tipo) => {
           let campos = lineaMas0.filter((item) => !item.includes("\r"));
           let lineaTieneCodigo = await buscaCodigoValido(lineaMas0);
 
-          if (campos.length > 7) {
+          if (lineaTieneCodigo.existe) {
             let indiceCodigo = lineaTieneCodigo.posicion;
 
-            let codigo = lineaMas0[0].replace(/\//g, "").trim();
+            let codigo = lineaMas0[indiceCodigo];
             let codigoInvalido = await valCodigo(codigo);
 
-            let item = {
-              cantidad: limpiarTexto(campos[indiceCodigo + 2]),
-              codigo: codigo,
-              descripcion: lineaTieneCodigo.descripcion,
-              valor: limpiarTexto(campos[campos.length - 1]),
-              peso: limpiarTexto(campos[indiceCodigo + 3]),
+            if (!codigoInvalido) {
+              let item = {
+                cantidad: limpiarTexto(campos[indiceCodigo + 2]),
+                codigo: codigo,
+                descripcion: lineaTieneCodigo.descripcion,
+                valor: limpiarTexto(campos[campos.length - 1]),
+                peso: limpiarTexto(campos[indiceCodigo + 3]),
 
-              codigoInvalido: false,
-              cantidadInvalida: false,
-              valorInvalido: false,
-            };
+                codigoInvalido: false,
+                cantidadInvalida: false,
+                valorInvalido: false,
+              };
 
-            item.codigoInvalido = await valCodigo(item.codigo);
-            item.cantidadInvalida = await valCantidad(item.cantidad);
-            item.valorInvalido = await valValor(item.valor);
+              item.codigoInvalido = await valCodigo(item.codigo);
+              item.cantidadInvalida = await valCantidad(item.cantidad);
+              item.valorInvalido = await valValor(item.valor);
 
-            let pesoInvalido = await valCantidad(item.peso);
-            if (pesoInvalido) {
-              item.peso = "0";
+              let pesoInvalido = await valCantidad(item.peso);
+              if (pesoInvalido) {
+                item.peso = "0";
+              }
+
+              data.push(item);
             }
-
-            data.push(item);
           }
         }
       }

@@ -83,9 +83,10 @@ router.post("/agenda", cors(), async function (req, res) {
           taskdata.dia
       );
       const fechaInicial = new Date();
-      fechaInicial.setDate(fechaInicial.getDate() - 45);
+      fechaInicial.setDate(fechaInicial.getDate() - 30);
       const fecha = fechaInicial.toISOString().split("T")[0];
       (taskdata["referencia"] = "lote"), (taskdata["fechaDesde"] = fecha);
+      console.log("Fecha Desde", fecha);
       await procesaAgenda(req, res, taskdata);
     },
     {
@@ -175,8 +176,11 @@ var reprograma = function (taskdata, idTask) {
           " / " +
           taskdata.dia
       );
-      (taskdata["referencia"] = "lote"),
-        (taskdata["fechaDesde"] = process.env.FECHA_DESDE_RPA);
+      const fechaInicial = new Date();
+      fechaInicial.setDate(fechaInicial.getDate() - 30);
+      const fecha = fechaInicial.toISOString().split("T")[0];
+      console.log("Fecha Desde", fecha);
+      (taskdata["referencia"] = "lote"), (taskdata["fechaDesde"] = fecha);
       procesaAgenda(null, null, taskdata);
     },
     {
@@ -1535,6 +1539,71 @@ router.get("/meat/:nroDespacho", cors(), async function (req, res) {
       message: "Error en la consulta",
     });
   }
+});
+
+router.get("/reprocesaFaltantes", cors(), async function (req, res) {
+  let sql = "";
+  sql += "select  ";
+  sql += "a.nroDespacho,   ";
+  sql += "b.proveedor,   ";
+  sql += "a.ocrArchivo,   ";
+  sql += "a.ocrArchivoPL   ";
+  sql += "from imp_importacion_archivos a  ";
+  sql += "join imp_importacions b on b.idImportacion = a.idImportacion ";
+  sql += "where detalles = '[]' ";
+
+  let faltantes = await sequelize.query(sql);
+  for (let [i, item] of faltantes[0].entries()) {
+    if (item.proveedor.toUpperCase().includes("SEARA")) {
+      await procesaOcrSeara(
+        JSON.parse(item.ocrArchivo),
+        JSON.parse(item.ocrArchivoPL),
+        item.nroDespacho
+      );
+    } else if (item.proveedor.toUpperCase().includes("JBS")) {
+      await procesaOcrJBS(JSON.parse(item.ocrArchivo), item.nroDespacho);
+    } else if (item.proveedor.toUpperCase().includes("SWIFT")) {
+      await procesaOcrSWIFT(
+        JSON.parse(item.ocrArchivo),
+        JSON.parse(item.ocrArchivoPL),
+        item.nroDespacho
+      );
+    } else if (item.proveedor.toUpperCase().includes("PILGRIMS")) {
+      await procesaOcrPILGRIMS(
+        JSON.parse(item.ocrArchivo),
+        JSON.parse(item.ocrArchivoPL),
+        item.nroDespacho
+      );
+    } else if (item.proveedor.toUpperCase().includes("MANTIQUEIRA")) {
+      await procesaOcrMANTIQUEIRA(
+        JSON.parse(item.ocrArchivo),
+        JSON.parse(item.ocrArchivoPL),
+        item.nroDespacho
+      );
+    } else if (item.proveedor.toUpperCase().includes("VICTORIA")) {
+      await procesaOcrVICTORIA(
+        JSON.parse(item.ocrArchivo),
+        JSON.parse(item.ocrArchivoPL),
+        item.nroDespacho
+      );
+    } else if (item.proveedor.toUpperCase().includes("BOSTON")) {
+      await procesaOcrBOSTON(
+        JSON.parse(item.ocrArchivo),
+        JSON.parse(item.ocrArchivoPL),
+        item.nroDespacho
+      );
+    } else if (item.proveedor.toUpperCase().includes("MEAT")) {
+      await procesaOcrMEAT(
+        JSON.parse(item.ocrArchivo),
+        JSON.parse(item.ocrArchivoPL),
+        item.nroDespacho
+      );
+    }
+  }
+  res.send({
+    error: false,
+    message: "Reprocesamiento de faltantes completado",
+  });
 });
 
 exports.RpaRossiRoutes = router;
