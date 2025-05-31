@@ -35,14 +35,6 @@ const procesaOcrSWIFTAereo = async (ocr, ocrPL, nroDespacho, tipo) => {
     );
   }
 
-  if (tipo === "T") {
-    fechaVencimiento = await procesaFechasVencimientoTerrestre(
-      ocr,
-      ocrPL,
-      nroDespacho
-    );
-  }
-
   //Procesa FACTURA COMERCIAL
 
   let paginasFactura = [];
@@ -69,11 +61,6 @@ const procesaOcrSWIFTAereo = async (ocr, ocrPL, nroDespacho, tipo) => {
             break;
           }
 
-          let linea = tabla[k].toUpperCase();
-          if (linea.includes("PRIOR") || linea.includes("ADJUST")) {
-            break;
-          }
-
           let lineaMas0 = tabla[k].split("\t");
           if (lineaMas0.includes(" PALLETS")) {
             break;
@@ -82,14 +69,13 @@ const procesaOcrSWIFTAereo = async (ocr, ocrPL, nroDespacho, tipo) => {
           let lineaMas2 = tabla[k + 2].split("\t");
 
           let codigo = lineaMas0[0];
-          //let codigoInvalido = await valCodigo(codigo);
+          let codigoInvalido = await valCodigo(codigo);
 
-          if (lineaMas0.length >= 6) {
+          if (!codigoInvalido) {
             const linea = lineaMas0.concat(lineaMas1, lineaMas2);
             const limpio = linea.filter((item) => !item.includes("\r"));
 
-            //const campos = await entreCodigos(limpio);
-            const campos = lineaMas0;
+            const campos = await entreCodigos(limpio);
 
             let item = {
               cantidad: campos[2],
@@ -325,7 +311,7 @@ const procesaFechasVencimiento = async (ocr, ocrPL, nroDespacho) => {
       }
     }
   }
-  let vencimiento = await calculaVencimiento(fechasVencimiento, diasDuracion);
+  let vencimiento = await calculaVencimiento2(fechasVencimiento, diasDuracion);
   return vencimiento;
 };
 
@@ -364,7 +350,7 @@ const procesaFechasVencimientoMaritimo = async (ocr, ocrPL, nroDespacho) => {
       }
     }
   }
-  let vencimiento = await calculaVencimiento(fechasVencimiento, -1);
+  let vencimiento = await calculaVencimiento2(fechasVencimiento, -1);
   return vencimiento;
 };
 
@@ -411,6 +397,29 @@ const calculaVencimiento = async (fechas, diasDuracion) => {
   // Convertir las fechas a objetos Date
   const fechasDate = fechas.map((fecha) => {
     const [mes, dia, anio] = fecha.split("-");
+    return new Date(`${anio}-${mes}-${dia}`);
+  });
+
+  // Encontrar la menor fecha
+  const menorFecha = new Date(Math.min(...fechasDate));
+
+  // Sumar 90 días
+  const fechaMas90 = new Date(menorFecha);
+  fechaMas90.setDate(fechaMas90.getDate() + diasDuracion + 1);
+
+  // Formatear fechas al formato mm/dd/yyyy
+  const formatear = (fecha) =>
+    `${fecha.getFullYear()}/` +
+    `${String(fecha.getMonth() + 1).padStart(2, "0")}/` +
+    `${String(fecha.getDate()).padStart(2, "0")}`;
+
+  return formatear(fechaMas90);
+};
+
+const calculaVencimiento2 = async (fechas, diasDuracion) => {
+  // Convertir las fechas a objetos Date
+  const fechasDate = fechas.map((fecha) => {
+    const [mes, dia, anio] = fecha.split("/");
     return new Date(`${anio}-${mes}-${dia}`);
   });
 
