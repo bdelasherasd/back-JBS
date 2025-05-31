@@ -35,6 +35,14 @@ const procesaOcrSWIFTAereo = async (ocr, ocrPL, nroDespacho, tipo) => {
     );
   }
 
+  if (tipo === "T") {
+    fechaVencimiento = await procesaFechasVencimientoTerrestre(
+      ocr,
+      ocrPL,
+      nroDespacho
+    );
+  }
+
   //Procesa FACTURA COMERCIAL
 
   let paginasFactura = [];
@@ -69,13 +77,14 @@ const procesaOcrSWIFTAereo = async (ocr, ocrPL, nroDespacho, tipo) => {
           let lineaMas2 = tabla[k + 2].split("\t");
 
           let codigo = lineaMas0[0];
-          let codigoInvalido = await valCodigo(codigo);
+          //let codigoInvalido = await valCodigo(codigo);
 
-          if (!codigoInvalido) {
+          if (lineaMas0.length > 6) {
             const linea = lineaMas0.concat(lineaMas1, lineaMas2);
             const limpio = linea.filter((item) => !item.includes("\r"));
 
-            const campos = await entreCodigos(limpio);
+            //const campos = await entreCodigos(limpio);
+            const campos = lineaMas0;
 
             let item = {
               cantidad: campos[2],
@@ -227,10 +236,49 @@ const procesaFechasVencimientoMaritimo = async (ocr, ocrPL, nroDespacho) => {
   return vencimiento;
 };
 
+const procesaFechasVencimientoTerrestre = async (ocr, ocrPL, nroDespacho) => {
+  let fechasVencimiento = [];
+  let paginasFactura = [];
+  let diasDuracion = 0;
+  for (let [i, e] of ocr.ParsedResults.entries()) {
+    let texto = e.ParsedText.toUpperCase();
+    if (
+      texto.includes("CERTIFICADO") &&
+      texto.includes("SANITARIO") &&
+      texto.includes("PARA") &&
+      texto.includes("CHILE")
+    ) {
+      paginasFactura.push(i);
+      if (texto.includes("CHILLED")) {
+        diasDuracion = 90;
+      } else {
+        diasDuracion = 270;
+      }
+    }
+  }
+
+  for (let [j, pagina] of paginasFactura.entries()) {
+    let tabla = ocr.ParsedResults[pagina].ParsedText.split("\n");
+    let tablaPL = ocrPL.ParsedResults[pagina].ParsedText.split("\n");
+
+    for (let [i, e] of tabla.entries()) {
+      let texto = e.toUpperCase();
+      const regexFecha = /\b(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])-\d{4}\b/g;
+
+      const encontrados = texto.match(regexFecha);
+      if (encontrados) {
+        fechasVencimiento.push(...encontrados);
+      }
+    }
+  }
+  let vencimiento = await calculaVencimiento(fechasVencimiento, diasDuracion);
+  return vencimiento;
+};
+
 const calculaVencimiento = async (fechas, diasDuracion) => {
   // Convertir las fechas a objetos Date
   const fechasDate = fechas.map((fecha) => {
-    const [mes, dia, anio] = fecha.split("/");
+    const [mes, dia, anio] = fecha.split("-");
     return new Date(`${anio}-${mes}-${dia}`);
   });
 
