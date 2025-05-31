@@ -9,7 +9,7 @@ const procesaOcrSWIFT = async (ocr, ocrPL, nroDespacho) => {
     where: { nroDespacho: nroDespacho },
   });
   if (dataImportacion.tipoTranporte.toUpperCase() == "TERRESTRE") {
-    return procesaOcrSWIFTAereo(ocr, ocrPL, nroDespacho, "T");
+    return procesaOcrSWIFTTerrestre(ocr, ocrPL, nroDespacho, "T");
   }
   if (dataImportacion.tipoTranporte.toUpperCase() == "MARITIMO") {
     return procesaOcrSWIFTAereo(ocr, ocrPL, nroDespacho, "M");
@@ -69,6 +69,11 @@ const procesaOcrSWIFTAereo = async (ocr, ocrPL, nroDespacho, tipo) => {
             break;
           }
 
+          let linea = tabla[k].toUpperCase();
+          if (linea.includes("PRIOR") || linea.includes("ADJUST")) {
+            break;
+          }
+
           let lineaMas0 = tabla[k].split("\t");
           if (lineaMas0.includes(" PALLETS")) {
             break;
@@ -79,7 +84,7 @@ const procesaOcrSWIFTAereo = async (ocr, ocrPL, nroDespacho, tipo) => {
           let codigo = lineaMas0[0];
           //let codigoInvalido = await valCodigo(codigo);
 
-          if (lineaMas0.length > 6) {
+          if (lineaMas0.length >= 6) {
             const linea = lineaMas0.concat(lineaMas1, lineaMas2);
             const limpio = linea.filter((item) => !item.includes("\r"));
 
@@ -92,6 +97,133 @@ const procesaOcrSWIFTAereo = async (ocr, ocrPL, nroDespacho, tipo) => {
               descripcion: campos[campos.length - 1],
               valor: campos[5],
               peso: campos[1],
+
+              codigoInvalido: false,
+              cantidadInvalida: false,
+              valorInvalido: false,
+            };
+
+            item.codigoInvalido = await valCodigo(item.codigo);
+            item.cantidadInvalida = await valCantidad(item.cantidad);
+            item.valorInvalido = await valValor(item.valor);
+
+            let pesoInvalido = await valCantidad(item.peso);
+            if (!pesoInvalido) {
+              item.peso = parseFloat(item.peso) * 0.45359237;
+              item.peso = item.peso.toFixed(2);
+            }
+            data.push(item);
+
+            let itemPL = {
+              descripcion: item.descripcion,
+              fechaProduccion: "",
+              sif: "1",
+              fechaVencimiento: fechaVencimiento,
+              CajasPallet: item.cantidad,
+              PesoNeto: item.peso,
+              PesoBruto: item.peso,
+              vencimientoInvalido: false,
+              pesonetoInvalido: false,
+              pesobrutoInvalido: false,
+            };
+            dataPacking.push(itemPL);
+          }
+        }
+      }
+    }
+
+    try {
+      await imp_importacion_archivo.update(
+        {
+          detalles: JSON.stringify(data),
+          packingList: JSON.stringify(dataPacking),
+        },
+        { where: { nroDespacho: nroDespacho } }
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  }
+};
+
+const procesaOcrSWIFTTerrestre = async (ocr, ocrPL, nroDespacho, tipo) => {
+  let data = [];
+  let dataPacking = [];
+  let fechaVencimiento = "";
+  if (tipo === "A") {
+    fechaVencimiento = await procesaFechasVencimiento(ocr, ocrPL, nroDespacho);
+  }
+
+  if (tipo === "M") {
+    fechaVencimiento = await procesaFechasVencimientoMaritimo(
+      ocr,
+      ocrPL,
+      nroDespacho
+    );
+  }
+
+  if (tipo === "T") {
+    fechaVencimiento = await procesaFechasVencimientoTerrestre(
+      ocr,
+      ocrPL,
+      nroDespacho
+    );
+  }
+
+  //Procesa FACTURA COMERCIAL
+
+  let paginasFactura = [];
+  for (let [i, e] of ocr.ParsedResults.entries()) {
+    let texto = e.ParsedText.toUpperCase();
+    if (texto.includes("INVOICE")) {
+      paginasFactura.push(i);
+    }
+  }
+
+  for (let [j, pagina] of paginasFactura.entries()) {
+    let tabla = ocr.ParsedResults[pagina].ParsedText.split("\n");
+    let tablaPL = ocrPL.ParsedResults[pagina].ParsedText.split("\n");
+
+    for (let [i, e] of tabla.entries()) {
+      let texto = e.toUpperCase();
+      if (
+        texto.includes("PRODUCT") ||
+        (texto.includes("DESCRIPTION") && texto.includes("WEIGHT"))
+      ) {
+        let indInicio = i + 1;
+        for (let k = indInicio; k < indInicio + 100; k++) {
+          if (k >= tabla.length - 2) {
+            break;
+          }
+
+          let linea = tabla[k].toUpperCase();
+          if (linea.includes("PRIOR") || linea.includes("ADJUST")) {
+            break;
+          }
+
+          let lineaMas0 = tabla[k].split("\t");
+          if (lineaMas0.includes(" PALLETS")) {
+            break;
+          }
+          let lineaMas1 = tabla[k + 1].split("\t");
+          let lineaMas2 = tabla[k + 2].split("\t");
+
+          let codigo = lineaMas0[0];
+          //let codigoInvalido = await valCodigo(codigo);
+
+          if (lineaMas0.length >= 6) {
+            const linea = lineaMas0.concat(lineaMas1, lineaMas2);
+            const limpio = linea.filter((item) => !item.includes("\r"));
+
+            //const campos = await entreCodigos(limpio);
+            const campos = lineaMas0;
+
+            let item = {
+              cantidad: campos[2].replace(/,/g, ""),
+              codigo: campos[0],
+              descripcion: campos[1],
+              valor: campos[campos.length - 2].replace(/,/g, ""),
+              peso: campos[2].replace(/,/g, ""),
 
               codigoInvalido: false,
               cantidadInvalida: false,
