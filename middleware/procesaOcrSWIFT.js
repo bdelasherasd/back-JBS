@@ -118,6 +118,21 @@ const procesaOcrSWIFTAereo = async (ocr, ocrPL, nroDespacho, tipo) => {
       }
     }
 
+    if (data.length === 0) {
+      let item = {
+        cantidad: "0",
+        codigo: "NO ENCONTRADO",
+        descripcion: "",
+        valor: 0,
+        peso: 0,
+
+        codigoInvalido: true,
+        cantidadInvalida: true,
+        valorInvalido: true,
+      };
+      data.push(item);
+    }
+
     try {
       await imp_importacion_archivo.update(
         {
