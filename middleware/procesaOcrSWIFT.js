@@ -420,11 +420,17 @@ const calculaVencimiento2 = async (fechas, diasDuracion) => {
   // Convertir las fechas a objetos Date
   const fechasDate = fechas.map((fecha) => {
     const [mes, dia, anio] = fecha.split("/");
-    return new Date(`${anio}-${mes}-${dia}`);
+    const d = new Date(`${anio}-${mes}-${dia}`);
+    if (d.toString() != "Invalid Date") {
+      return new Date(`${anio}-${mes}-${dia}`);
+    }
   });
 
+  // Filtrar fechas válidas
+  const fechasValidas = fechasDate.filter((fecha) => fecha instanceof Date);
+
   // Encontrar la menor fecha
-  const menorFecha = new Date(Math.min(...fechasDate));
+  const menorFecha = new Date(Math.min(...fechasValidas));
 
   // Sumar 90 días
   const fechaMas90 = new Date(menorFecha);
