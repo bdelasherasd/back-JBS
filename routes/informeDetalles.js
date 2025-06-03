@@ -30,79 +30,88 @@ router.options("*", async function (req, res) {
   res.send();
 });
 
-router.get("/list/:fechaIncial/:fechaFinal", cors(), async function (req, res) {
-  showLog(req, res);
-  let fechaInicial = req.sanitize(req.params.fechaIncial);
-  let fechaFinal = req.sanitize(req.params.fechaFinal);
+router.get(
+  "/list/:ano/:fechaIncial/:fechaFinal",
+  cors(),
+  async function (req, res) {
+    showLog(req, res);
+    let ano = req.sanitize(req.params.ano);
 
-  let sql = "";
-  sql += "select  ";
-  sql += "b.idImportacion, ";
-  sql += "b.nroDespacho, ";
-  sql += "b.refCliente, ";
-  sql += "a.detalles,  ";
-  sql += "a.packingList ";
-  sql += "from imp_importacion_archivos a  ";
-  sql += "join imp_importacions b on a.idImportacion=b.idImportacion ";
-  sql += "join imp_gastos_aduanas c on c.idImportacion=b.idImportacion ";
-  sql += "where b.estado=1 ";
-  sql += `and convert(date, isnull(c.fechaAceptacion,'01-01-1990'), 105) between '${fechaInicial}' and '${fechaFinal}' `;
+    let fechaInicial = req.sanitize(req.params.fechaIncial);
+    let fechaFinal = req.sanitize(req.params.fechaFinal);
 
-  try {
-    let data = await sequelize.query(sql);
-    data = data[0];
-    let dataOut = [];
-    if (data.length > 0) {
-      sql =
-        "SELECT sku, producto, proteina, origen, marca, proveedor, estado, calidad, tipo FROM imp_skus";
-      let dataSku = await sequelize.query(sql);
-      dataSku = dataSku[0];
+    let sql = "";
+    sql += "select  ";
+    sql += "b.idImportacion, ";
+    sql += "b.nroDespacho, ";
+    sql += "b.refCliente, ";
+    sql += "a.detalles,  ";
+    sql += "a.packingList, ";
+    sql +=
+      "convert(varchar, convert(date, isnull(c.fechaAceptacion,'01-01-1990'), 105)) as fechaAceptacion ";
+    sql += "from imp_importacion_archivos a  ";
+    sql += "join imp_importacions b on a.idImportacion=b.idImportacion ";
+    sql += "join imp_gastos_aduanas c on c.idImportacion=b.idImportacion ";
+    sql += "where b.estado=1 ";
+    sql += "and c.fechaAceptacion like '%" + ano + "%' ";
+    sql += `and convert(date, isnull(c.fechaAceptacion,'01-01-1990'), 105) between '${fechaInicial}' and '${fechaFinal}' `;
 
-      for (let [i, item] of data.entries()) {
-        let detalles = item.detalles ? JSON.parse(item.detalles) : [];
+    try {
+      let data = await sequelize.query(sql);
+      data = data[0];
+      let dataOut = [];
+      if (data.length > 0) {
+        sql =
+          "SELECT sku, producto, proteina, origen, marca, proveedor, estado, calidad, tipo FROM imp_skus";
+        let dataSku = await sequelize.query(sql);
+        dataSku = dataSku[0];
 
-        for (let det of detalles) {
-          let skuData = dataSku.find((skuItem) => skuItem.sku === det.codigo);
-          if (skuData) {
-            det.producto = skuData.producto;
-            det.proteina = skuData.proteina;
-            det.origen = skuData.origen;
-            det.marca = skuData.marca;
-            det.proveedor = skuData.proveedor;
-            det.estado = skuData.estado;
-            det.calidad = skuData.calidad;
-            det.tipo = skuData.tipo;
+        for (let [i, item] of data.entries()) {
+          let detalles = item.detalles ? JSON.parse(item.detalles) : [];
+
+          for (let det of detalles) {
+            let skuData = dataSku.find((skuItem) => skuItem.sku === det.codigo);
+            if (skuData) {
+              det.producto = skuData.producto;
+              det.proteina = skuData.proteina;
+              det.origen = skuData.origen;
+              det.marca = skuData.marca;
+              det.proveedor = skuData.proveedor;
+              det.estado = skuData.estado;
+              det.calidad = skuData.calidad;
+              det.tipo = skuData.tipo;
+            }
+
+            dataOut.push({
+              nroDespacho: item.nroDespacho,
+              refCliente: item.refCliente,
+              fechaAceptacion: item.fechaAceptacion,
+              codigo: det.codigo,
+              producto: det.producto,
+              proteina: det.proteina,
+              origen: det.origen,
+              marca: det.marca,
+              proveedor: det.proveedor,
+              estado: det.estado,
+              calidad: det.calidad,
+              tipo: det.tipo,
+              vecimiento: await getVencimiento(item.packingList),
+              cantidad: parseFloat(det.cantidad),
+              peso: parseFloat(det.peso),
+              valor: parseFloat(det.valor),
+            });
           }
-
-          dataOut.push({
-            idImportacion: item.idImportacion,
-            nroDespacho: item.nroDespacho,
-            refCliente: item.refCliente,
-            codigo: det.codigo,
-            producto: det.producto,
-            proteina: det.proteina,
-            origen: det.origen,
-            marca: det.marca,
-            proveedor: det.proveedor,
-            estado: det.estado,
-            calidad: det.calidad,
-            tipo: det.tipo,
-            cantidad: det.cantidad,
-            peso: det.peso,
-            valor: det.valor,
-            vecimiento: await getVencimiento(item.packingList),
-          });
         }
+        res.send(dataOut);
+      } else {
+        console.log("No hay datos");
+        res.send(data);
       }
-      res.send(dataOut);
-    } else {
-      console.log("No hay datos");
-      res.send(data);
+    } catch (error) {
+      console.log(error.message);
     }
-  } catch (error) {
-    console.log(error.message);
   }
-});
+);
 
 const getVencimiento = async (packingList) => {
   if (packingList && packingList.length > 0) {
