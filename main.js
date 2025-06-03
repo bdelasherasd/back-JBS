@@ -48,6 +48,9 @@ app.use("/importaciones", importacionesRoutes);
 var informeCostosAduanaRoutes = require("./routes/informeCostosAduana");
 app.use("/informeCostosAduana", informeCostosAduanaRoutes);
 
+var informeDetallesRoutes = require("./routes/informeDetalles");
+app.use("/informeDetalles", informeDetallesRoutes);
+
 var {
   apiBancoCentralRoutes,
   reprogramaapiBancoCentral,
