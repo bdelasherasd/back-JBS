@@ -606,6 +606,10 @@ const saveImportacion = async (item) => {
     });
     if (!existe) {
       await imp_importacion.create(item);
+    } else {
+      await imp_importacion.update(item, {
+        where: { nroDespacho: item.nroDespacho },
+      });
     }
   } catch (error) {
     console.log(error);

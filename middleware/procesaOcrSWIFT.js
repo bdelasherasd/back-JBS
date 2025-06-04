@@ -434,10 +434,12 @@ const calculaVencimiento = async (fechas, diasDuracion) => {
 const calculaVencimiento2 = async (fechas, diasDuracion) => {
   // Convertir las fechas a objetos Date
   const fechasDate = fechas.map((fecha) => {
-    const [mes, dia, anio] = fecha.split("/");
-    const d = new Date(`${anio}-${mes}-${dia}`);
-    if (d.toString() != "Invalid Date") {
-      return new Date(`${anio}-${mes}-${dia}`);
+    if (fecha) {
+      const [mes, dia, anio] = fecha.split("/");
+      const d = new Date(`${anio}-${mes}-${dia}`);
+      if (d.toString() != "Invalid Date") {
+        return new Date(`${anio}-${mes}-${dia}`);
+      }
     }
   });
 
