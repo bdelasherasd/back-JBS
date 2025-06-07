@@ -444,7 +444,7 @@ const procesaOcrSearaEstrategia2 = async (ocr, ocrPL, nroDespacho) => {
   //Se guarda el array data en la base de datos
 
   let paginasFactura = [];
-  for (let [i, e] of ocrPL.ParsedResults.entries()) {
+  for (let [i, e] of ocr.ParsedResults.entries()) {
     let texto = e.ParsedText.toUpperCase();
     if (texto.includes("FACTURA COMERCIAL")) {
       paginasFactura.push(i);
@@ -477,7 +477,7 @@ const procesaOcrSearaEstrategia2 = async (ocr, ocrPL, nroDespacho) => {
         let lineaCantidad = tabla[i - 3].split("\t");
         let lineaCantidad2 = tabla[i - 2].split("\t");
 
-        item.cantidad = lineaCantidad[0].replace(/\./g, "").replace(/,/g, ".");
+        item.cantidad = linea[0].replace(/\./g, "").replace(/,/g, ".");
         if (await valCantidad(item.cantidad)) {
           item.cantidad = lineaCantidad2[0]
             .replace(/\./g, "")
@@ -509,7 +509,7 @@ const procesaOcrSearaEstrategia2 = async (ocr, ocrPL, nroDespacho) => {
             lineaConCodigo[lineaConCodigo.length - 3] +
             "-" +
             lineaConCodigo[lineaConCodigo.length - 2];
-          item.valor = await getValor(tablaNoPL, item.codigo);
+          //item.valor = await getValor(tablaNoPL, item.codigo);
           item.codigoInvalido = await valCodigo(item.codigo);
         }
 
