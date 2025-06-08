@@ -30,6 +30,10 @@ const getPeso = async (ocr, ocrPL) => {
         .replace(/[^\d,\.]/g, "")
         .replace(/\./g, "")
         .replace(/,/g, ".");
+
+      if ((peso.match(/\./g) || []).length > 1) {
+        peso = eliminarPuntosMenosElUltimo(peso);
+      }
       return peso;
     }
   }
