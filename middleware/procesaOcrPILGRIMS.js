@@ -50,7 +50,7 @@ const procesaOcrPILGRIMSMaritimo = async (ocr, ocrPL, nroDespacho, tipo) => {
         texto.includes("CONTAINER") ||
         (texto.includes("DESCRIPTION") && texto.includes("PRODUCT"))
       ) {
-        let indInicio = i;
+        let indInicio = i + 1;
         for (let k = indInicio; k < indInicio + 100; k++) {
           if (k >= tabla.length - 1) {
             break;
@@ -64,7 +64,17 @@ const procesaOcrPILGRIMSMaritimo = async (ocr, ocrPL, nroDespacho, tipo) => {
           if (campos.length > 7) {
             let indiceCodigo = lineaTieneCodigo.posicion;
 
-            let codigo = lineaMas0[0].replace(/\//g, "").trim();
+            let codigo = "";
+
+            let resultadoBusqueda = await buscaCodigoValido(lineaMas0);
+            if (resultadoBusqueda.existe) {
+              codigo = lineaMas0[resultadoBusqueda.posicion]
+                .replace(/\//g, "")
+                .trim();
+            } else {
+              codigo = "";
+            }
+
             let codigoInvalido = await valCodigo(codigo);
 
             let item = {
