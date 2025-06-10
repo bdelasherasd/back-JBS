@@ -316,7 +316,12 @@ const procesaDetallesLote = async (fechaDesde) => {
 
   for (let [i, e] of results.entries()) {
     let eta = e["eta"];
-    if (!eta.includes("No Ingresada") && !eta.includes("Pendiente")) {
+    let via = e["via_transporte"].trim();
+    if (
+      !eta.includes("No Ingresada") &&
+      !eta.includes("Pendiente") &&
+      via != ""
+    ) {
       let ano = eta.split("-")[2];
       let mes = eta.split("-")[1];
       let dia = eta.split("-")[0];
