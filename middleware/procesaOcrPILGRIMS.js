@@ -3,6 +3,7 @@ var imp_sku = require("../models/imp_sku");
 var imp_importacion_archivo = require("../models/imp_importacion_archivo");
 var imp_importacion = require("../models/imp_importacion");
 var { valCantidad, valCodigo, valFecha, valValor } = require("./validaciones");
+var getInvoiceNumber = require("./getInvoiceNumber");
 
 const procesaOcrPILGRIMS = async (ocr, ocrPL, nroDespacho) => {
   let dataImportacion = await imp_importacion.findOne({
@@ -87,6 +88,7 @@ const procesaOcrPILGRIMSMaritimo = async (ocr, ocrPL, nroDespacho, tipo) => {
               codigoInvalido: false,
               cantidadInvalida: false,
               valorInvalido: false,
+              invoiceNumber: limpiarTexto(campos[0]),
             };
 
             item.codigoInvalido = await valCodigo(item.codigo);

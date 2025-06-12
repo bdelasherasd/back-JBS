@@ -247,6 +247,7 @@ router.post("/updateDetalles", cors(), async function (req, res) {
   let datos = {
     idImportacion: req.sanitize(req.body.idImportacion),
     index: req.sanitize(req.body.index),
+    InvoiceNumber: req.sanitize(req.body.invoiceNumber),
     codigo: req.sanitize(req.body.codigo),
     cantidad: req.sanitize(req.body.cantidad),
     valor: req.sanitize(req.body.valor),
@@ -262,6 +263,7 @@ router.post("/updateDetalles", cors(), async function (req, res) {
 
     let det = JSON.parse(resultImp.detalles);
     let item = {
+      invoiceNumber: req.sanitize(req.body.invoiceNumber),
       codigo: req.body.codigo,
       cantidad: req.body.cantidad,
       valor: req.body.valor,
@@ -343,6 +345,7 @@ router.post("/insertDetalles", cors(), async function (req, res) {
 
   let datos = {
     idImportacion: req.sanitize(req.body.idImportacion),
+    invoiceNumber: req.sanitize(req.body.invoiceNumber),
     codigo: req.sanitize(req.body.codigo),
     cantidad: req.sanitize(req.body.cantidad),
     valor: req.sanitize(req.body.valor),
@@ -358,6 +361,7 @@ router.post("/insertDetalles", cors(), async function (req, res) {
 
     let det = JSON.parse(resultImp.detalles || "[]");
     let item = {
+      invoiceNumber: req.sanitize(req.body.invoiceNumber),
       codigo: req.body.codigo,
       cantidad: req.body.cantidad,
       valor: req.body.valor,

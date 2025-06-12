@@ -49,8 +49,15 @@ const procesaOcrSWIFTAereo = async (ocr, ocrPL, nroDespacho, tipo) => {
     let tabla = ocr.ParsedResults[pagina].ParsedText.split("\n");
     let tablaPL = ocrPL.ParsedResults[pagina].ParsedText.split("\n");
 
+    let invoiceNumber = "0";
     for (let [i, e] of tabla.entries()) {
       let texto = e.toUpperCase();
+
+      if (texto.includes("INVOICE NUMBER")) {
+        let linea = tabla[i].split("\t");
+        invoiceNumber = linea[linea.length - 2].trim();
+      }
+
       if (
         texto.includes("PRODUCT") ||
         (texto.includes("DESCRIPTION") && texto.includes("WEIGHT"))
@@ -87,6 +94,8 @@ const procesaOcrSWIFTAereo = async (ocr, ocrPL, nroDespacho, tipo) => {
               codigoInvalido: false,
               cantidadInvalida: false,
               valorInvalido: false,
+
+              invoiceNumber: invoiceNumber,
             };
 
             item.codigoInvalido = await valCodigo(item.codigo);

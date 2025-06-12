@@ -4,6 +4,7 @@ var imp_importacion_archivo = require("../models/imp_importacion_archivo");
 var imp_importacion = require("../models/imp_importacion");
 var { valCantidad, valCodigo, valFecha, valValor } = require("./validaciones");
 const { text } = require("express");
+var getInvoiceNumber = require("./getInvoiceNumber");
 
 const procesaOcrBOSTON = async (ocr, ocrPL, nroDespacho) => {
   let dataImportacion = await imp_importacion.findOne({
@@ -68,6 +69,8 @@ const procesaOcrMaritimo = async (ocr, ocrPL, nroDespacho, tipo) => {
               codigoInvalido: false,
               cantidadInvalida: false,
               valorInvalido: false,
+
+              invoiceNumber: await getInvoiceNumber(nroDespacho),
             };
 
             item.codigoInvalido = await valCodigo(item.codigo);
