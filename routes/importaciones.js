@@ -138,6 +138,27 @@ router.post("/apruebaImportacion", cors(), async function (req, res) {
   }
 });
 
+router.post("/updateImportacion", cors(), async function (req, res) {
+  showLog(req, res);
+
+  let datos = {
+    idImportacion: req.sanitize(req.body.idImportacion),
+    tipoCambioAlternativo: req.body.tipoCambioAlternativo,
+    usuarioModificaTipoCambio: req.sanitize(req.body.usuarioModificaTipoCambio),
+    fechaModificaTipoCambio: `${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`,
+  };
+  try {
+    let data = await imp_importacion.update(datos, {
+      where: {
+        idImportacion: datos.idImportacion,
+      },
+    });
+    res.send(data);
+  } catch (error) {
+    console.log(error.message);
+  }
+});
+
 router.post("/desapruebaImportacion", cors(), async function (req, res) {
   showLog(req, res);
 

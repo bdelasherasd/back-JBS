@@ -23,6 +23,9 @@ var imp_importacion = sequelize.define("imp_importacion", {
   estado: "varchar(10)",
   usuarioAprueba: type.STRING,
   fechaAprueba: type.STRING,
+  tipoCambioAlternativo: type.DECIMAL(12, 4),
+  usuarioModificaTipoCambio: type.STRING,
+  fechaModificaTipoCambio: type.STRING,
 });
 //sequelize.sync({ alter: true });
 
