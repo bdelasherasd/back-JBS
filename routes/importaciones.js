@@ -506,4 +506,47 @@ router.post("/deletePackingList", cors(), async function (req, res) {
   }
 });
 
+router.get("/agregaInvoiceNumber", cors(), async function (req, res) {
+  showLog(req, res);
+  let sql = "";
+  sql += "select * from imp_importacions ";
+  try {
+    let data = await sequelize.query(sql);
+    data = data[0];
+
+    for (let d of data) {
+      let resultImp = await imp_importacion_archivo.findOne({
+        where: {
+          idImportacion: d.idImportacion,
+        },
+      });
+
+      if (resultImp) {
+        let det = JSON.parse(resultImp.detalles || "[]");
+
+        for (let item of det) {
+          if (!item.invoiceNumber) {
+            item.invoiceNumber = d.refCliente;
+          }
+        }
+        let detalles = JSON.stringify(det);
+
+        let datos = {
+          detalles: detalles,
+        };
+
+        await imp_importacion_archivo.update(datos, {
+          where: { idImportacion: d.idImportacion },
+        });
+      }
+    }
+    res.send({
+      error: false,
+      message: "Invoice numbers updated successfully.",
+    });
+  } catch (error) {
+    console.log(error.message);
+  }
+});
+
 module.exports = router;
