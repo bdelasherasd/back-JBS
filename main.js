@@ -21,7 +21,7 @@ app.use((req, res, next) => {
   const origin = req.get("Origin");
   if (process.env.CERRAR_APIS === "SI") {
     if (!origin || !allowedOrigins.includes(origin)) {
-      return res.status(403).send("Origen no permitido");
+      return res.status(403).send("Origen no permitido.... Acceso denegado.");
     }
   }
   next();
