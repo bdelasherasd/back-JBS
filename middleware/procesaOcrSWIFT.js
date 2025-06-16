@@ -88,7 +88,7 @@ const procesaOcrSWIFTAereo = async (ocr, ocrPL, nroDespacho, tipo) => {
               cantidad: campos[2],
               codigo: campos[0],
               descripcion: campos[campos.length - 1],
-              valor: campos[5],
+              valor: campos[5] || "",
               peso: campos[1],
 
               codigoInvalido: false,
@@ -100,13 +100,25 @@ const procesaOcrSWIFTAereo = async (ocr, ocrPL, nroDespacho, tipo) => {
 
             item.codigoInvalido = await valCodigo(item.codigo);
             item.cantidadInvalida = await valCantidad(item.cantidad);
+
+            if (item.cantidadInvalida) {
+              item.cantidad = "";
+            }
+
             item.valorInvalido = await valValor(item.valor);
+
+            if (item.valorInvalido) {
+              item.valor = "";
+            }
 
             let pesoInvalido = await valCantidad(item.peso);
             if (!pesoInvalido) {
               item.peso = parseFloat(item.peso) * 0.45359237;
               item.peso = item.peso.toFixed(2);
+            } else {
+              item.peso = "";
             }
+
             data.push(item);
 
             let itemPL = {
@@ -114,7 +126,7 @@ const procesaOcrSWIFTAereo = async (ocr, ocrPL, nroDespacho, tipo) => {
               fechaProduccion: "",
               sif: "1",
               fechaVencimiento: fechaVencimiento,
-              CajasPallet: item.cantidad,
+              CajasPallet: item.cantidad || "",
               PesoNeto: item.peso,
               PesoBruto: item.peso,
               vencimientoInvalido: false,
