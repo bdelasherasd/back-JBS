@@ -46,6 +46,7 @@ router.get("/listImportaciones", cors(), async function (req, res) {
   sql += "when '0' then 'Ingresado' ";
   sql += "when '1' then 'Aprobado' ";
   sql += "end estado, ";
+  sql += "convert(varchar,imp_importacions.createdAt,111) as fechaCreacion,  ";
   sql += "imp_importacion_archivos.detalles,  ";
   sql += "imp_importacion_archivos.packingList,  ";
   sql += "'true' as valido  ";

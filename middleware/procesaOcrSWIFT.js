@@ -133,6 +133,11 @@ const procesaOcrSWIFTAereo = async (ocr, ocrPL, nroDespacho, tipo) => {
               pesonetoInvalido: false,
               pesobrutoInvalido: false,
             };
+
+            if (fechaVencimiento === "0000/00/00") {
+              itemPL.vencimientoInvalido = true;
+            }
+
             dataPacking.push(itemPL);
           }
         }
@@ -275,6 +280,11 @@ const procesaOcrSWIFTTerrestre = async (ocr, ocrPL, nroDespacho, tipo) => {
               pesonetoInvalido: false,
               pesobrutoInvalido: false,
             };
+
+            if (fechaVencimiento === "0000/00/00") {
+              itemPL.vencimientoInvalido = true;
+            }
+
             dataPacking.push(itemPL);
           }
         }
@@ -347,8 +357,15 @@ const procesaFechasVencimiento = async (ocr, ocrPL, nroDespacho) => {
       }
     }
   }
-  let vencimiento = await calculaVencimiento2(fechasVencimiento, diasDuracion);
-  return vencimiento;
+  if (fechasVencimiento.length === 0) {
+    return "0000/00/00";
+  } else {
+    let vencimiento = await calculaVencimiento2(
+      fechasVencimiento,
+      diasDuracion
+    );
+    return vencimiento;
+  }
 };
 
 const procesaFechasVencimientoMaritimo = async (ocr, ocrPL, nroDespacho) => {
@@ -386,8 +403,12 @@ const procesaFechasVencimientoMaritimo = async (ocr, ocrPL, nroDespacho) => {
       }
     }
   }
-  let vencimiento = await calculaVencimiento2(fechasVencimiento, -1);
-  return vencimiento;
+  if (fechasVencimiento.length === 0) {
+    return "0000/00/00";
+  } else {
+    let vencimiento = await calculaVencimiento2(fechasVencimiento, -1);
+    return vencimiento;
+  }
 };
 
 const procesaFechasVencimientoTerrestre = async (ocr, ocrPL, nroDespacho) => {

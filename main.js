@@ -60,6 +60,12 @@ app.use("/apiBancoCentral", apiBancoCentralRoutes);
 var { RpaRossiRoutes, reprogramaRpaRossi } = require("./routes/RpaRossi");
 app.use("/RpaRossi", RpaRossiRoutes);
 
+var {
+  NotificaProcesoRoutes,
+  reprogramaNotificaProceso,
+} = require("./routes/NotificaProceso");
+app.use("/NotificaProceso", NotificaProcesoRoutes);
+
 app.use(express.static(path.join(__dirname, "../front/dist")));
 
 app.use("/pdfs", express.static(path.join(__dirname, "./pdf")));
@@ -100,6 +106,9 @@ var procesaTareas = function () {
           }
           if (e.aplicacion === "RpaRossi") {
             reprogramaRpaRossi(JSON.parse(e.taskdata), e.idTask);
+          }
+          if (e.aplicacion === "NotificaProceso") {
+            reprogramaNotificaProceso(JSON.parse(e.taskdata), e.idTask);
           }
         });
         resolve(data);

@@ -41,20 +41,23 @@ router.get(
     let fechaFinal = req.sanitize(req.params.fechaFinal);
 
     let sql = "";
-    sql += "select  ";
-    sql += "b.idImportacion, ";
-    sql += "b.nroDespacho, ";
-    sql += "b.refCliente, ";
-    sql += "a.detalles,  ";
-    sql += "a.packingList, ";
+    sql += "select  b.idImportacion,  ";
+    sql += "b.nroDespacho,  ";
+    sql += "		b.refCliente,  ";
+    sql += "a.detalles,   ";
+    sql += "		a.packingList,  ";
+    sql += "b.tipoCambioAlternativo, ";
+    sql += "		isnull(d.valor, 0) tipoCambioBancoCentral, ";
     sql +=
-      "convert(varchar, convert(date, isnull(c.fechaAceptacion,'01-01-1990'), 105)) as fechaAceptacion ";
-    sql += "from imp_importacion_archivos a  ";
-    sql += "join imp_importacions b on a.idImportacion=b.idImportacion ";
-    sql += "join imp_gastos_aduanas c on c.idImportacion=b.idImportacion ";
+      "convert(varchar, convert(date, isnull(c.fechaPago,'01-01-1990'), 105)) as fechaPago  ";
+    sql += "from imp_importacion_archivos a   ";
+    sql += "join imp_importacions b on a.idImportacion=b.idImportacion  ";
+    sql += "join imp_gastos_aduanas c on c.idImportacion=b.idImportacion  ";
+    sql +=
+      "left join dolarobs d on d.fecha = convert(varchar, convert(date, isnull(c.fechaPago,'01-01-1990'), 105)) ";
     sql += "where b.estado=1 ";
     sql += "and c.fechaAceptacion like '%" + ano + "%' ";
-    sql += `and convert(date, isnull(c.fechaAceptacion,'01-01-1990'), 105) between '${fechaInicial}' and '${fechaFinal}' `;
+    sql += `and convert(date, isnull(c.fechaPago,'01-01-1990'), 105) between '${fechaInicial}' and '${fechaFinal}' `;
 
     try {
       let data = await sequelize.query(sql);
@@ -82,6 +85,14 @@ router.get(
               det.tipo = skuData.tipo;
             }
 
+            let valorEnPesos = 0;
+            if (item.tipoCambioAlternativo != 0) {
+              valorEnPesos = parseFloat(det.valor) * item.tipoCambioAlternativo;
+            } else {
+              valorEnPesos =
+                parseFloat(det.valor) * item.tipoCambioBancoCentral;
+            }
+
             dataOut.push({
               nroDespacho: item.nroDespacho,
               refCliente: item.refCliente,
@@ -99,6 +110,9 @@ router.get(
               cantidad: parseFloat(det.cantidad),
               peso: parseFloat(det.peso),
               valor: parseFloat(det.valor),
+              tipoCambioAlternativo: parseFloat(item.tipoCambioAlternativo),
+              tipoCambioBancoCentral: parseFloat(item.tipoCambioBancoCentral),
+              valorEnPesos: valorEnPesos,
             });
           }
         }
