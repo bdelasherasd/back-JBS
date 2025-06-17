@@ -110,6 +110,7 @@ router.get(
               cantidad: parseFloat(det.cantidad),
               peso: parseFloat(det.peso),
               valor: parseFloat(det.valor),
+              fechaPago: item.fechaPago,
               tipoCambioAlternativo: parseFloat(item.tipoCambioAlternativo),
               tipoCambioBancoCentral: parseFloat(item.tipoCambioBancoCentral),
               valorEnPesos: valorEnPesos,
