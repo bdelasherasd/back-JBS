@@ -192,6 +192,10 @@ var reprograma = function (taskdata, idTask) {
 };
 
 router.get("/procesaAhora/:nroDespacho", cors(), async function (req, res) {
+  // await imp_importacion_archivo.destroy({
+  //   where: { nroDespacho: req.params.nroDespacho },
+  // });
+
   await procesaAgenda(req, res, { nroDespacho: req.params.nroDespacho });
   res.send({
     error: false,

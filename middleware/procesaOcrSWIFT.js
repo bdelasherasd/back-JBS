@@ -149,12 +149,13 @@ const procesaOcrSWIFTAereo = async (ocr, ocrPL, nroDespacho, tipo) => {
         cantidad: "0",
         codigo: "NO ENCONTRADO",
         descripcion: "",
-        valor: 0,
-        peso: 0,
+        valor: "0",
+        peso: "0",
 
         codigoInvalido: true,
         cantidadInvalida: true,
         valorInvalido: true,
+        invoiceNumber: invoiceNumber,
       };
       data.push(item);
     }
