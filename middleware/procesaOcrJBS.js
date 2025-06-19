@@ -94,7 +94,6 @@ const procesaOcrJbsAereo = async (ocr, nroDespacho) => {
               cantidadInvalida: false,
               valorInvalido: false,
               pesoInvalido: false,
-              invoiceNumber: await getInvoiceNumber(nroDespacho),
             };
 
             item.codigo = linea[1];
@@ -103,11 +102,13 @@ const procesaOcrJbsAereo = async (ocr, nroDespacho) => {
             item.cantidadInvalida = await valCantidad(item.cantidad);
             item.valor = linea[linea.length - 2];
             item.valorInvalido = await valValor(item.valor);
-            item.peso = linea[3];
+            (item.invoiceNumber = await getInvoiceNumber(nroDespacho)),
+              (item.peso = linea[3]);
             if (isNaN(item.peso)) {
               item.peso = 0;
               item.pesoInvalido = true;
             }
+
             data.push(item);
           }
           i++;
@@ -143,6 +144,7 @@ const procesaOcrJbsAereo = async (ocr, nroDespacho) => {
 
   for (let [j, pagina] of paginasPackingList.entries()) {
     let tabla = ocr.ParsedResults[pagina].ParsedText.split("\n");
+    let textoTabla = ocr.ParsedResults[pagina].ParsedText;
 
     for (let [i, e] of tabla.entries()) {
       let texto = e.toUpperCase();
@@ -154,7 +156,7 @@ const procesaOcrJbsAereo = async (ocr, nroDespacho) => {
         let k = indInicio;
         let ki = indInicio;
         let sumadias = 0;
-        if (tabla.includes("CHILLED")) {
+        if (textoTabla.includes("CHILLED")) {
           sumadias = 90;
         } else {
           sumadias = 730;
@@ -265,21 +267,34 @@ const procesaOcrJbsTerrestre = async (ocr, nroDespacho) => {
           item.cantidad = linea[2];
         } else {
           item.codigo = cod[0];
-          item.cantidad = cod[1]
-            .replace(/[^\d,\.]/g, "")
-            .replace(/\./g, "")
-            .replace(/./g, "")
-            .replace(/,/g, ".");
+          item.cantidad = cod[1];
+          //.replace(/[^\d,\.]/g, "")
+          //.replace(/\./g, "")
+          //.replace(/./g, "")
+          //.replace(/,/g, ".");
         }
-        item.peso = linea[3];
+        do {
+          linea[4] = linea[4].replace(".", "");
+        } while (linea[4].includes("."));
+        do {
+          linea[4] = linea[4].replace(",", ".");
+        } while (linea[4].includes(","));
+        item.peso = linea[4];
+
         //.replace(/[^\d,\.]/g, "")
-        //.replace(/\./g, "");
+        //.replace(/\./g, "")
         //.replace(/./g, "")
-        // .replace(/,/g, ".");
+        //.replace(/,/g, ".");
+        do {
+          linea[6] = linea[6].replace(".", "");
+        } while (linea[6].includes("."));
+        do {
+          linea[6] = linea[6].replace(",", ".");
+        } while (linea[6].includes(","));
 
         item.valor = linea[6];
         //.replace(/[^\d,\.]/g,"")
-        //.replace(/\./g, "");
+        //.replace(/\./g, "")
         //.replace(/./g, "")
         //.replace(/,/g, ".");
 
@@ -287,6 +302,7 @@ const procesaOcrJbsTerrestre = async (ocr, nroDespacho) => {
 
         item.cantidadInvalida = await valCantidad(item.cantidad);
         item.valorInvalido = await valValor(item.valor);
+        item.invoiceNumber = await getInvoiceNumber(nroDespacho);
         //if (isNaN(item.peso)) {item.peso = 0 ; item.pesoInvalido = true } ;
         data.push(item);
       }
@@ -370,8 +386,34 @@ const procesaOcrJbsTerrestre = async (ocr, nroDespacho) => {
             item.sif = "1";
             item.fechaVencimiento = lineaFechas[1];
             item.CajasPallet = "1";
-            item.PesoNeto = linea[1];
-            item.PesoBruto = linea[2];
+
+            do {
+              linea[linea.length - 3] = linea[linea.length - 3].replace(
+                ".",
+                ""
+              );
+            } while (linea[linea.length - 3].includes("."));
+            do {
+              linea[linea.length - 3] = linea[linea.length - 3].replace(
+                ",",
+                "."
+              );
+            } while (linea[linea.length - 3].includes(","));
+            item.PesoNeto = linea[linea.length - 3];
+
+            do {
+              linea[linea.length - 2] = linea[linea.length - 2].replace(
+                ".",
+                ""
+              );
+            } while (linea[linea.length - 2].includes("."));
+            do {
+              linea[linea.length - 2] = linea[linea.length - 2].replace(
+                ",",
+                "."
+              );
+            } while (linea[linea.length - 2].includes(","));
+            item.PesoBruto = linea[linea.length - 2];
 
             if (!item.fechaProduccion.includes("TOTALS")) {
               dataPacking.push(item);
@@ -457,7 +499,6 @@ const procesaOcrJbsMaritimo = async (ocr, nroDespacho) => {
               cantidadInvalida: false,
               valorInvalido: false,
               pesoInvalido: false,
-              invoiceNumber: await getInvoiceNumber(nroDespacho),
             };
 
             item.codigo = linea[0];
@@ -466,6 +507,7 @@ const procesaOcrJbsMaritimo = async (ocr, nroDespacho) => {
             item.cantidadInvalida = await valCantidad(item.cantidad);
             item.valor = linea[7];
             item.valorInvalido = await valValor(item.valor);
+            item.invoiceNumber = await getInvoiceNumber(nroDespacho);
             item.peso = linea[5];
             if (isNaN(item.peso)) {
               item.peso = 0;
@@ -506,6 +548,7 @@ const procesaOcrJbsMaritimo = async (ocr, nroDespacho) => {
 
   for (let [j, pagina] of paginasPackingList.entries()) {
     let tabla = ocr.ParsedResults[pagina].ParsedText.split("\n");
+    let textoTabla = ocr.ParsedResults[pagina].ParsedText;
 
     for (let [i, e] of tabla.entries()) {
       let texto = e.toUpperCase();
@@ -517,7 +560,7 @@ const procesaOcrJbsMaritimo = async (ocr, nroDespacho) => {
         let k = indInicio;
         let ki = indInicio;
         let sumadias = 0;
-        if (tabla.includes("CHILLED")) {
+        if (textoTabla.includes("CHILLED")) {
           sumadias = 90;
         } else {
           sumadias = 730;
