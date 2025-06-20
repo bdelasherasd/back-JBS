@@ -24,7 +24,12 @@ const procesaOcrVICTORIATerrestre = async (ocr, ocrPL, nroDespacho, tipo) => {
       paginasFactura.push(i);
     }
   }
-  let dataFactura = await procesaFactura(paginasFactura, ocr, ocrPL);
+  let dataFactura = await procesaFactura(
+    paginasFactura,
+    nroDespacho,
+    ocr,
+    ocrPL
+  );
 
   let paginasPackingList = [];
   for (let [i, e] of ocr.ParsedResults.entries()) {
@@ -33,7 +38,12 @@ const procesaOcrVICTORIATerrestre = async (ocr, ocrPL, nroDespacho, tipo) => {
       paginasPackingList.push(i);
     }
   }
-  let dataPacking = await procesaPackingList(paginasPackingList, ocr, ocrPL);
+  let dataPacking = await procesaPackingList(
+    paginasPackingList,
+    nroDespacho,
+    ocr,
+    ocrPL
+  );
 
   for (let [i, e] of dataPacking.codigos.entries()) {
     dataFactura[i].codigo = e;
@@ -53,7 +63,7 @@ const procesaOcrVICTORIATerrestre = async (ocr, ocrPL, nroDespacho, tipo) => {
   }
 };
 
-const procesaFactura = async (paginasFactura, ocr, ocrPL) => {
+const procesaFactura = async (paginasFactura, nroDespacho, ocr, ocrPL) => {
   let data = [];
   for (let [j, pagina] of paginasFactura.entries()) {
     let tabla = ocr.ParsedResults[pagina].ParsedText.split("\n");
@@ -107,7 +117,12 @@ const procesaFactura = async (paginasFactura, ocr, ocrPL) => {
   return data;
 };
 
-const procesaPackingList = async (paginasPackingList, ocr, ocrPL) => {
+const procesaPackingList = async (
+  paginasPackingList,
+  nroDespacho,
+  ocr,
+  ocrPL
+) => {
   let dataPacking = [];
   let codigos = [];
   for (let [j, pagina] of paginasPackingList.entries()) {
