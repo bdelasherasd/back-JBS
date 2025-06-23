@@ -886,6 +886,7 @@ const procesaVentanaGastos = async (nroDespacho) => {
         break;
       }
       console.log("Esperando grupoDetalle");
+      grupoDetalle = await getObjeto('//*[@id="tResumen"]/div[1]');
       await driver.sleep(1000);
     }
   }
