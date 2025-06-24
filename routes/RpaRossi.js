@@ -677,7 +677,7 @@ const procesaVentanaDoctos = async (nroDespacho) => {
     }
   }
 
-  if (indiceArchivo == -1) {
+  if (indiceArchivo <= 0) {
     return;
   }
 
