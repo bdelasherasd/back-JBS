@@ -18,9 +18,7 @@ const showLog = (req, res) => {
     req.connection.socket.remoteAddress;
   let session = req.session.id;
   console.log(
-    "Session: " +
-      session +
-      " ip: " +
+    " ip: " +
       ip +
       " a las " +
       new Date().toLocaleString("es-ES", { timeZone: timezone }) +

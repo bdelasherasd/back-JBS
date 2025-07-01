@@ -12,6 +12,8 @@ require("dotenv").config({ path: "variables.env" });
 
 var urlcliente = process.env.URLCLIENTE;
 
+var timezone = process.env.TIMEZONE;
+
 const permisos = {
   origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -160,6 +162,11 @@ router.post("/login", cors(), async function (req, res) {
       data = data[0];
       bcrypt.compare(password, data.password, function (err, result) {
         if (result) {
+          console.log(
+            "Logeado: ",
+            email,
+            new Date().toLocaleString("es-ES", { timeZone: timezone })
+          );
           data["error"] = false;
           res.send(data);
         } else {
