@@ -227,7 +227,14 @@ const procesaOcrJbsAereo = async (ocr, nroDespacho) => {
 //     *********** INICIO PROCESO TERRESTRE    **********************
 const procesaOcrJbsTerrestre = async (ocr, nroDespacho) => {
   let data = [];
-
+  let item = {
+    cantidad: "0",
+    codigo: "",
+    descripcion: "",
+    valor: "0",
+    peso: "0",
+    codigoInvalido: false,
+  };
   // aplicacion terrestre
 
   //Procesa FACTURA COMERCIAL
@@ -248,62 +255,60 @@ const procesaOcrJbsTerrestre = async (ocr, nroDespacho) => {
 
   for (let [j, pagina] of paginasFactura.entries()) {
     let tabla = ocr.ParsedResults[pagina].ParsedText.split("\n");
-    let indice = 0;
 
     for (let [i, e] of tabla.entries()) {
       let texto = e.toUpperCase();
       if (texto.includes("GOODS") && texto.includes("HS CODE")) {
-        indice = i;
-      }
-    }
+        let linea = tabla[i + 2].split("\t");
 
-    i = indice + 1;
-    do {
-      let linea = tabla[i].split("\t");
-      if (linea.length > 6) {
-        let item = {
-          cantidad: "0",
-          codigo: "",
-          descripcion: "",
-          valor: "0",
-          peso: "0",
-          codigoInvalido: false,
-        };
-        let cod = linea[2].split(",");
-        cod = linea[2].replace(/,/g, " ").split(" ");
-        item.codigo = cod[0];
-
+        let cod = linea[2].split(" ");
+        if (cod.length == 1) {
+          item.codigo = linea[1];
+          item.cantidad = linea[2];
+        } else {
+          item.codigo = cod[0];
+          item.cantidad = cod[1];
+          //.replace(/[^\d,\.]/g, "")
+          //.replace(/\./g, "")
+          //.replace(/./g, "")
+          //.replace(/,/g, ".");
+        }
         do {
-          linea[3] = linea[3].replace(".", "");
-        } while (linea[3].includes("."));
+          linea[4] = linea[4].replace(".", "");
+        } while (linea[4].includes("."));
         do {
-          linea[3] = linea[3].replace(",", ".");
-        } while (linea[3].includes(","));
-        item.peso = linea[3];
+          linea[4] = linea[4].replace(",", ".");
+        } while (linea[4].includes(","));
+        item.peso = linea[4];
 
+        //.replace(/[^\d,\.]/g, "")
+        //.replace(/\./g, "")
+        //.replace(/./g, "")
+        //.replace(/,/g, ".");
         do {
           linea[6] = linea[6].replace(".", "");
         } while (linea[6].includes("."));
         do {
           linea[6] = linea[6].replace(",", ".");
         } while (linea[6].includes(","));
+
         item.valor = linea[6];
+        //.replace(/[^\d,\.]/g,"")
+        //.replace(/\./g, "")
+        //.replace(/./g, "")
+        //.replace(/,/g, ".");
 
         item.codigoInvalido = await valCodigo(item.codigo);
+
         item.cantidadInvalida = await valCantidad(item.cantidad);
         item.valorInvalido = await valValor(item.valor);
         item.invoiceNumber = await getInvoiceNumber(nroDespacho);
-        if (isNaN(item.peso)) {
-          item.peso = 0;
-          item.pesoInvalido = true;
-
-          linea = tabla[i + 1].split("\t");
-        }
+        //if (isNaN(item.peso)) {item.peso = 0 ; item.pesoInvalido = true } ;
         data.push(item);
       }
-      i++;
-    } while (tabla.length > i);
+    }
   }
+
   try {
     await imp_importacion_archivo.update(
       { detalles: JSON.stringify(data) },
@@ -327,191 +332,122 @@ const procesaOcrJbsTerrestre = async (ocr, nroDespacho) => {
     }
   }
 
-  let ultimalineatabla = 0;
-  let paginasPL = 0;
-
   for (let [j, pagina] of paginasPackingList.entries()) {
     let tabla = ocr.ParsedResults[pagina].ParsedText.split("\n");
-    ultimalineatabla = tabla.length;
-    paginasPL = pagina;
-  }
-  let lineainicial = 0;
-  let tabla = ocr.ParsedResults[paginasPL].ParsedText.split("\n");
 
-  do {
-    texto = tabla[lineainicial].toUpperCase();
-    lineainicial++;
-  } while (lineainicial < ultimalineatabla && !texto.includes("GOODS"));
+    for (let [i, e] of tabla.entries()) {
+      let texto = e.toUpperCase();
+      let columnas = texto.split("\t");
 
-  lineainicial = lineainicial + 3;
+      if (texto.includes("OF GOODS")) {
+        let indInicio = i + 3;
+        let codigoActual = "";
 
-  do {
-    texto = tabla[lineainicial].toUpperCase();
-    linea = tabla[lineainicial].split("\t");
-    let lineaFechas = tabla[lineainicial].split("\t")[0].split(" ");
+        for (let k = indInicio; k < indInicio + 100; k++) {
+          if (k >= tabla.length) {
+            break;
+          }
 
-    if (lineaFechas[0].includes("|")) {
-      let f = lineaFechas[0].split("|");
-      lineaFechas[0] = f[0];
-      lineaFechas[1] = f[1];
-    }
+          let lineaAnterior = tabla[k - 1].split("\t");
 
-    let item = {
-      descripcion: "", //codigoActual"",
-      fechaProduccion: "",
-      sif: "",
-      fechaVencimiento: "",
-      CajasPallet: "",
-      PesoNeto: "",
-      PesoBruto: "",
-    };
-    if (linea.length > 3) {
-      item.descripcion = "1";
-      item.fechaProduccion = lineaFechas[0];
-      item.sif = "1";
+          let linea = tabla[k].split("\t");
+          lineaFechas = tabla[k].split("\t")[0].split(" ");
 
-      //    Formatea Fechas //
-      item.fechaVencimiento = lineaFechas[1];
-      let f = lineaFechas[1].replace("'", "/");
-      f = f.replace(":", "");
-      f = f.replace("|", "");
-      f = f.slice(0, 10);
+          if (lineaFechas[0].includes("|")) {
+            let f = lineaFechas[0].split("|");
+            lineaFechas[0] = f[0];
+            lineaFechas[1] = f[1];
+          }
 
-      if (f.length == 10) {
-        let ano = f.slice(6, 10);
-        let mes = f.slice(3, 5);
-        let dia = f.slice(0, 2);
-        item.fechaVencimiento = `${ano}/${mes}/${dia}`;
-      } else {
-        item.fechaVencimiento = "1900/01/01";
+          let item = {
+            descripcion: codigoActual,
+            fechaProduccion: "",
+            sif: "",
+            fechaVencimiento: "",
+            CajasPallet: "",
+            PesoNeto: "",
+            PesoBruto: "",
+          };
+          if (linea.length > 3) {
+            if (lineaAnterior.length < 3) {
+              break;
+            }
+
+            let codigo = lineaAnterior[2].split(" ")[2];
+
+            if (codigo && !codigo.includes(",")) {
+              if (codigo) {
+                codigoActual = codigo;
+              }
+            }
+
+            item.descripcion = codigoActual;
+            item.fechaProduccion = lineaFechas[0];
+            item.sif = "1";
+            item.fechaVencimiento = lineaFechas[1];
+            item.CajasPallet = "1";
+
+            do {
+              linea[linea.length - 3] = linea[linea.length - 3].replace(
+                ".",
+                ""
+              );
+            } while (linea[linea.length - 3].includes("."));
+            do {
+              linea[linea.length - 3] = linea[linea.length - 3].replace(
+                ",",
+                "."
+              );
+            } while (linea[linea.length - 3].includes(","));
+            item.PesoNeto = linea[linea.length - 3];
+
+            do {
+              linea[linea.length - 2] = linea[linea.length - 2].replace(
+                ".",
+                ""
+              );
+            } while (linea[linea.length - 2].includes("."));
+            do {
+              linea[linea.length - 2] = linea[linea.length - 2].replace(
+                ",",
+                "."
+              );
+            } while (linea[linea.length - 2].includes(","));
+            item.PesoBruto = linea[linea.length - 2];
+
+            if (!item.fechaProduccion.includes("TOTALS")) {
+              dataPacking.push(item);
+            }
+          }
+        }
+        try {
+          await imp_importacion_archivo.update(
+            { packingList: JSON.stringify(dataPacking) },
+            { where: { nroDespacho: nroDespacho } }
+          );
+        } catch (error) {
+          console.log(error);
+        }
       }
-
-      //   Fin        Formatea fechas //
-
-      item.CajasPallet = "1";
-      do {
-        linea[linea.length - 3] = linea[linea.length - 3].replace(".", "");
-      } while (linea[linea.length - 3].includes("."));
-
-      do {
-        linea[linea.length - 3] = linea[linea.length - 3].replace(",", ".");
-      } while (linea[linea.length - 3].includes(","));
-      item.PesoNeto = linea[linea.length - 3];
-
-      do {
-        linea[linea.length - 2] = linea[linea.length - 2].replace(".", "");
-      } while (linea[linea.length - 2].includes("."));
-
-      do {
-        linea[linea.length - 2] = linea[linea.length - 2].replace(",", ".");
-      } while (linea[linea.length - 2].includes(","));
-
-      item.PesoBruto = linea[linea.length - 2];
-
-      item.fechaInvalida = await valFecha(item.fechaVencimiento);
-      item.PesoNetoInvalido = await valFecha(item.PesoNeto);
-      item.PesoBrutoInvalido = await valFecha(item.PesoBruto);
-      dataPacking.push(item);
     }
-    lineainicial++;
-    texto = tabla[lineainicial].toUpperCase();
-  } while (!texto.includes("TOTALS")); //|| (lineainicial < ultimalineatabla));
-  try {
-    await imp_importacion_archivo.update(
-      { packingList: JSON.stringify(dataPacking) },
-      { where: { nroDespacho: nroDespacho } }
-    );
-  } catch (error) {
-    console.log(error);
   }
-
-  //for (let [j, pagina] of paginasPackingList.entries()) {
-  //  let tabla = ocr.ParsedResults[pagina].ParsedText.split("\n");
-  //  ultimalineatabla = tabla.length ;
-
-  //  for (let [i, e] of tabla.entries()) {
-  //    let texto = e.toUpperCase();
-  //    let columnas = texto.split("\t");
-
-  //    if (texto.includes("GOODS")) {
-  //      let indInicio = i + 3;
-  //      let codigoActual = "";
-
-  //      for (let k = indInicio; k < indInicio + 100; k++)
-  //      {
-  //        if (k >= tabla.length) {break;}
-
-  //        //let lineaAnterior = tabla[k - 1].split("\t");
-
-  //        let linea = tabla[k].split("\t");
-  //        lineaFechas = tabla[k].split("\t")[0].split(" ");
-
-  //        if (lineaFechas[0].includes("|"))
-  //        { let f = lineaFechas[0].split("|"); lineaFechas[0] = f[0]; lineaFechas[1] = f[1];}
-
-  //          let item = {descripcion: codigoActual,fechaProduccion: "",sif: "", fechaVencimiento: "",
-  //          CajasPallet: "",PesoNeto: "", PesoBruto: "", };
-  //          if (linea.length > 3) { //if (lineaAnterior.length < 3) {break;}
-
-  //let codigo = lineaAnterior[2].split(" ")[2];
-
-  //if (codigo && !codigo.includes(",")) {if (codigo) {codigoActual = codigo;}}
-
-  //          item.descripcion = 1 ;//codigoActual;
-  //          item.fechaProduccion = lineaFechas[0];
-  //          item.sif = "1";
-  //          item.fechaVencimiento = lineaFechas[1];
-  //          if (item.fechaProduccion.includes("Total")) { break; }
-
-  //   Inicio     Formatea fechas //
-
-  //          let f = lineaFechas[1].replace("'", "/");
-  //              f = f.replace(":", "");
-  //          f = f.replace("|", ""); f = f.slice(0, 10);
-  //          if (f.length == 10) {let ano = f.slice(6, 10);let mes = f.slice(3, 5);let dia = f.slice(0, 2);
-  //              item.fechaVencimiento = `${ano}/${mes}/${dia}`;}
-  //          else {item.fechaVencimiento = lineaFechas[1].replace("'", "/");}
-
-  //   Fin        Formatea fechas //
-
-  //          item.CajasPallet = "1";
-
-  //         do {linea[linea.length - 3] = linea[linea.length - 3].replace(".", "");}
-  //             while (linea[linea.length - 3].includes("."));
-
-  //          do {linea[linea.length - 3] = linea[linea.length - 3].replace(",","."); }
-  //             while (linea[linea.length - 3].includes(","));
-  //             item.PesoNeto = linea[linea.length - 3];
-
-  //          do {linea[linea.length - 2] = linea[linea.length - 2].replace(".","");}
-  //              while (linea[linea.length - 2].includes("."));
-
-  //          do {linea[linea.length - 2] = linea[linea.length - 2].replace(",",".");}
-  //             while (linea[linea.length - 2].includes(","));
-
-  //          item.PesoBruto = linea[linea.length - 2];
-  //          item.fechaInvalida = await valFecha(item.fechaVencimiento);
-  //          item.PesoNetoInvalido = await valFecha(item.PesoNeto);
-  //          item.PesoBrutoInvalido = await valFecha(item.PesoBruto);
-
-  //          if (!item.fechaProduccion.includes("TOTALS")) {
-  //            dataPacking.push(item);
-  //          }
-  //        }
-  //      }
-  //      try {
-  //        await imp_importacion_archivo.update(
-  //          { packingList: JSON.stringify(dataPacking) },
-  //          { where: { nroDespacho: nroDespacho } }
-  //        );
-  //      } catch (error) {
-  //        console.log(error);
-  //      }
-  //    }
-  //  }
-  //}
 };
 
+//const valCodigo = async (codigo) => {
+//  let existe = await imp_sku.findOne({
+//    where: { sku: codigo },
+//  });
+//  if (!existe) {
+//    return true;
+//  } else {
+//    return false;
+//  }
+
+//const valCodigo = async (codigo) => {let existe = await imp_sku.findOne(
+//  { where: { sku: codigo }, });
+//    if (!existe) { return true;} else {return false;}
+//};
+//};
 //     ************FIN PROCESO TERRESTRE       **********************
 
 //     ************INICIO PROCESO MARITIMO    ***********************
