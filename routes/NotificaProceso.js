@@ -196,7 +196,7 @@ const procesaAgenda = async (req, res, taskdata) => {
   sql +=
     "imp_importacion_archivos on imp_importacion_archivos.idImportacion=imp_importacions.idImportacion) det ";
   sql += "group by FechaIngreso ";
-  sql += "having sum(Ingresados) > 0 ";
+  sql += "having sum(Ingresados) > 0 and FechaIngreso >= '2025/07/01'";
 
   try {
     let data = await sequelize.query(sql);
