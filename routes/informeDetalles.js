@@ -58,7 +58,6 @@ router.get(
     sql += "where b.estado=1 ";
     sql += "and c.fechaAceptacion like '%" + ano + "%' ";
     sql += `and convert(date, isnull(c.fechaPago,'01-01-1990'), 105) between '${fechaInicial}' and '${fechaFinal}' `;
-
     try {
       let data = await sequelize.query(sql);
       data = data[0];

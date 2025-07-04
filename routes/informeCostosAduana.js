@@ -48,7 +48,7 @@ router.get(
     sql += "a.paisEmbarque,  ";
     sql += "b.fechaGuia fechaImportacion,  ";
     sql += "a.fechaETA, ";
-    sql += "b.fechaPago,  ";
+    sql += "i.fecha_pago,  ";
     sql += "b.fechaAceptacion,  ";
     sql += "convert(float,replace(b.tipocambio,',','.')) tipocambio, ";
     sql += "d.valor dolarObservado, ";
@@ -65,10 +65,11 @@ router.get(
     sql +=
       "     imp_importacion_archivos c on a.idImportacion = c.idImportacion left join ";
     sql +=
-      "dolarobs d on REPLACE(CONVERT(varchar, d.fecha, 105), '.', '-') = replace(rtrim(b.fechaGuia),'','01-01-1990') ";
-    sql += "where b.fechaAceptacion like '%" + ano + "%' ";
+      "dolarobs d on REPLACE(CONVERT(varchar, d.fecha, 105), '.', '-') = replace(rtrim(b.fechaGuia),'','01-01-1990') left join ";
+    sql += "imp_csvs i on i.despacho = a.nroDespacho ";
+    sql += "where i.fecha_pago like '%" + ano + "%' ";
     sql += "and b.gastosAgencia <> '[]' ";
-    sql += `and convert(date, isnull(b.fechaAceptacion,'01-01-1990'), 105) between '${fechaInicial}' and '${fechaFinal}' `;
+    sql += `and convert(date, isnull(i.fecha_pago,'01-01-1990'), 105) between '${fechaInicial}' and '${fechaFinal}' `;
     try {
       let data = await sequelize.query(sql);
       data = data[0];
@@ -79,6 +80,7 @@ router.get(
           let desembolsos = JSON.parse(item.desembolsosAgencia);
           let gastosAgencia = 0;
           let desembolsosAgencia = 0;
+          let tiempodeuso = 0;
           for (let gasto of gastos) {
             gastosAgencia += parseFloat(gasto.valor.replace(/\./g, ""));
           }
@@ -90,6 +92,13 @@ router.get(
             if (desembolso.afecto) {
               iva += parseFloat(desembolso.valor.replace(/\./g, ""));
             }
+            if (desembolso.nombreGasto) {
+              if (
+                desembolso.nombreGasto.toUpperCase().includes("TIEMPO DE USO")
+              ) {
+                tiempodeuso += parseFloat(desembolso.valor.replace(/\./g, ""));
+              }
+            }
           }
           iva = Math.round(iva - iva / 1.19);
           data[i]["CostoBruto"] = desembolsosAgencia;
@@ -98,6 +107,7 @@ router.get(
           data[i]["TipoTransporte"] = item.tipoTranporte;
           data[i]["CostoImportacionNeto"] =
             desembolsosAgencia + gastosAgencia - iva;
+          data[i]["TiempoUso"] = tiempodeuso;
           data[i]["% Importacion"] = redondear(
             (data[i]["CostoImportacionNeto"] / item["CLP Importacion"]) * 100,
             2

@@ -30,6 +30,7 @@ var imp_gastos_aduana = sequelize.define("imp_gastos_aduana", {
   fechaAceptacion: type.STRING,
   gastosAgencia: "[nvarchar](max)",
   desembolsosAgencia: "[nvarchar](max)",
+  nombreArchivoUyD: type.STRING,
 });
 sequelize.sync({ alter: true });
 

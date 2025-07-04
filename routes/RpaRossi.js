@@ -934,6 +934,16 @@ const procesaVentanaGastos = async (nroDespacho) => {
     fechaAceptacionText = rCsv.fecha_aceptacion;
   }
 
+  let fileNameUyD = "";
+  var objUyD = await getObjeto(
+    '//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a'
+  );
+  if (objUyD) {
+    await objUyD.click();
+    await driver.sleep(2000);
+    fileNameUyD = await obtenerPdfMasNuevo(downloadDir);
+  }
+
   while (true) {
     try {
       tabGastos = await driver.wait(
@@ -991,6 +1001,7 @@ const procesaVentanaGastos = async (nroDespacho) => {
       fechaAceptacion: fechaAceptacionText,
       gastosAgencia: JSON.stringify([]),
       desembolsosAgencia: JSON.stringify([]),
+      nombreArchivoUyD: fileNameUyD,
     };
     await saveGastos(item);
     return;
@@ -1253,6 +1264,7 @@ const procesaVentanaGastos = async (nroDespacho) => {
     fechaAceptacion: fechaAceptacionText,
     gastosAgencia: JSON.stringify(gastosAgencia),
     desembolsosAgencia: JSON.stringify(desembolsos),
+    nombreArchivoUyD: fileNameUyD,
   };
   await saveGastos(item);
 
@@ -1618,6 +1630,39 @@ router.get("/reprocesaFaltantes", cors(), async function (req, res) {
   res.send({
     error: false,
     message: "Reprocesamiento de faltantes completado",
+  });
+});
+
+router.get("/reprocesaCsv", cors(), async function (req, res) {
+  let fileName = await obtenerCsvMasNuevo(downloadDir);
+  if (!fileName) {
+    res.send({
+      error: true,
+      message: "No se encontró archivo CSV",
+    });
+    return;
+  }
+
+  let filePath = path.join(downloadDir, fileName);
+  console.log("Procesando archivo CSV", filePath);
+
+  const results = await procesaCsv(filePath);
+
+  for (let [i, item] of results.entries()) {
+    let existe = await imp_csv.findOne({
+      where: { despacho: item.despacho },
+    });
+    if (!existe) {
+      await imp_csv.create(item);
+    } else {
+      await imp_csv.update(item, {
+        where: { despacho: item.despacho },
+      });
+    }
+  }
+  res.send({
+    error: false,
+    message: "Reprocesamiento de CSV completado",
   });
 });
 
