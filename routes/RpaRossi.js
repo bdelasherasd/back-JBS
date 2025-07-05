@@ -941,10 +941,7 @@ const procesaVentanaGastos = async (nroDespacho) => {
       '//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a'
     );
     if (objUyD) {
-      await driver.executeScript(
-        "arguments[0].scrollIntoView({ behavior: 'smooth', block: 'center' });",
-        objUyD
-      );
+      await driver.executeScript("arguments[0].scrollIntoView();", objUyD);
       await objUyD.click();
       await driver.sleep(2000);
       fileNameUyD = await obtenerPdfMasNuevo(downloadDir);
