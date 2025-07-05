@@ -935,13 +935,16 @@ const procesaVentanaGastos = async (nroDespacho) => {
   }
 
   let fileNameUyD = "";
-  var objUyD = await getObjeto(
-    '//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a'
-  );
-  if (objUyD) {
-    await objUyD.click();
-    await driver.sleep(2000);
-    fileNameUyD = await obtenerPdfMasNuevo(downloadDir);
+
+  if (await notieneUyd(nroDespacho)) {
+    var objUyD = await getObjeto(
+      '//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a'
+    );
+    if (objUyD) {
+      await objUyD.click();
+      await driver.sleep(2000);
+      fileNameUyD = await obtenerPdfMasNuevo(downloadDir);
+    }
   }
 
   while (true) {
@@ -1665,6 +1668,18 @@ router.get("/reprocesaCsv", cors(), async function (req, res) {
     message: "Reprocesamiento de CSV completado",
   });
 });
+
+const notieneUyd = async (nroDespacho) => {
+  let gastos = await imp_gastos_aduana.findOne({
+    where: { nroDespacho: nroDespacho },
+  });
+  if (gastos && gastos.nombreArchivoUyD) {
+    if (gastos.nombreArchivoUyD.trim() !== "") {
+      return false;
+    }
+  }
+  return true;
+};
 
 exports.RpaRossiRoutes = router;
 exports.reprogramaRpaRossi = reprograma;

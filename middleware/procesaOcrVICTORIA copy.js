@@ -18,9 +18,9 @@ const procesaOcrVICTORIATerrestre = async (ocr, ocrPL, nroDespacho, tipo) => {
   //Procesa FACTURA COMERCIAL
 
   let paginasFactura = [];
-  for (let [i, e] of ocrPL.ParsedResults.entries()) {
+  for (let [i, e] of ocr.ParsedResults.entries()) {
     let texto = e.ParsedText.toUpperCase();
-    if (texto.includes("PACKING LIST POR PRODUCTO")) {
+    if (texto.includes("COMMERCIAL INVOICE")) {
       paginasFactura.push(i);
     }
   }
@@ -69,29 +69,24 @@ const procesaFactura = async (paginasFactura, nroDespacho, ocr, ocrPL) => {
     let tabla = ocr.ParsedResults[pagina].ParsedText.split("\n");
     let tablaPL = ocrPL.ParsedResults[pagina].ParsedText.split("\n");
 
-    for (let [i, e] of tablaPL.entries()) {
+    for (let [i, e] of tabla.entries()) {
       let texto = e.toUpperCase();
-      if (texto.includes("CAJAS") && texto.includes("PIEZAS")) {
+      if (texto.includes("CARTONS") && texto.includes("NETWEIGHT")) {
         let indInicio = i + 1;
         for (let k = indInicio; k < indInicio + 100; k++) {
-          if (k >= tablaPL.length - 1) {
+          if (k >= tabla.length - 1) {
             break;
           }
 
-          let textoDetalle = tablaPL[k].toUpperCase();
-          if (textoDetalle.includes("TOTAL:")) {
-            break; // Si encontramos la línea TOTAL, salimos del bucle
-          }
-
-          let lineaMas0 = tablaPL[k].replace().split("\t");
+          let lineaMas0 = tabla[k].replace().split("\t");
 
           let campos = lineaMas0.filter((item) => !item.includes("\r"));
 
           if (campos.length >= 5) {
-            let codigo = campos[0].slice(0, 10);
-            let cantidad = limpiarTexto2(campos[2]);
-            let valor = "0";
-            let peso = limpiarTexto2(campos[4]);
+            let codigo = campos[2].slice(0, 10);
+            let cantidad = limpiarTexto2(campos[0]);
+            let valor = limpiarTexto2(campos[campos.length - 1]);
+            let peso = limpiarTexto2(campos[1]);
             let item = {
               cantidad: cantidad,
               codigo: codigo,
@@ -100,13 +95,13 @@ const procesaFactura = async (paginasFactura, nroDespacho, ocr, ocrPL) => {
               peso: peso,
               codigoInvalido: false,
               cantidadInvalida: false,
-              valorInvalido: true,
+              valorInvalido: false,
               invoiceNumber: await getInvoiceNumber(nroDespacho),
             };
 
             item.codigoInvalido = await valCodigo(item.codigo);
             item.cantidadInvalida = await valCantidad(item.cantidad);
-            item.valorInvalido = true;
+            item.valorInvalido = await valValor(item.valor);
 
             let pesoInvalido = await valCantidad(item.peso);
             if (pesoInvalido) {

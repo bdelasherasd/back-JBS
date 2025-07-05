@@ -8,6 +8,7 @@ var dolarobs = require("../models/dolarobs");
 var imp_importacion = require("../models/imp_importacion");
 var imp_importacion_archivo = require("../models/imp_importacion_archivo");
 const showLog = require("../middleware/showLog");
+const imp_gastos_aduana = require("../models/imp_gastos_aduana");
 
 const permisos = {
   origin: "*",
@@ -185,6 +186,21 @@ router.get("/getImportacion/:id", cors(), async function (req, res) {
   showLog(req, res);
   try {
     let data = await imp_importacion_archivo.findOne({
+      where: {
+        idImportacion: req.params.id,
+      },
+    });
+    //res.status(200).json({data})
+    res.send(data);
+  } catch (error) {
+    console.log(error.message);
+  }
+});
+
+router.get("/getImportacionUyD/:id", cors(), async function (req, res) {
+  showLog(req, res);
+  try {
+    let data = await imp_gastos_aduana.findOne({
       where: {
         idImportacion: req.params.id,
       },
