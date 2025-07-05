@@ -40,36 +40,36 @@ router.get(
     let fechaFinal = req.sanitize(req.params.fechaFinal);
 
     let sql = "";
-    sql += "select  ";
-    sql += "a.nroDespacho,  ";
-    sql += "a.refCliente,  ";
-    sql += "a.tipoTranporte,  ";
-    sql += "b.mercaderia,  ";
-    sql += "a.paisEmbarque,  ";
-    sql += "b.fechaGuia fechaImportacion,  ";
-    sql += "a.fechaETA, ";
-    sql += "i.fecha_pago,  ";
-    sql += "b.fechaAceptacion,  ";
-    sql += "convert(float,replace(b.tipocambio,',','.')) tipocambio, ";
-    sql += "d.valor dolarObservado, ";
-    sql += "b.valorCif [USD Importacion], ";
+
+    sql += "select   ";
+    sql += "a.nroDespacho,   ";
+    sql += "a.refCliente,   ";
+    sql += "a.tipoTranporte,   ";
+    sql += "b.mercaderia,   ";
+    sql += "a.paisEmbarque,   ";
+    sql += "i.fecha_factura fechaImportacion,   ";
+    sql += "a.fechaETA,  ";
+    sql += "i.fecha_pago,   ";
+    sql += "b.fechaAceptacion,   ";
+    sql += "convert(float,replace(b.tipocambio,',','.')) tipocambio,  ";
+    sql += "d.valor dolarObservado, b.valorCif [USD Importacion],  ";
     sql +=
-      "b.valorCif*convert(float,replace(b.tipocambio,',','.'))  [CLP Importacion], ";
+      "b.valorCif*convert(float,replace(b.tipocambio,',','.'))  [CLP Importacion],  ";
     sql +=
-      "CONVERT(decimal,REPLACE(RTRIM(isnull([valorIvaGcp],'0')),'.',''))  Gcp, ";
-    sql += "b.gastosAgencia, ";
-    sql += "b.desembolsosAgencia ";
-    sql += "from imp_importacions a left join ";
+      "CONVERT(decimal,REPLACE(RTRIM(isnull([valorIvaGcp],'0')),'.',''))  Gcp,  ";
+    sql += "b.gastosAgencia, b.desembolsosAgencia  ";
+    sql += "from imp_importacions a left join  ";
     sql +=
       "imp_gastos_aduanas b on a.idImportacion = b.idImportacion left join ";
     sql +=
-      "     imp_importacion_archivos c on a.idImportacion = c.idImportacion left join ";
+      "imp_importacion_archivos c on a.idImportacion = c.idImportacion  left join  ";
+    sql += "imp_csvs i on i.despacho = a.nroDespacho left join  ";
     sql +=
-      "dolarobs d on REPLACE(CONVERT(varchar, d.fecha, 105), '.', '-') = replace(rtrim(b.fechaGuia),'','01-01-1990') left join ";
-    sql += "imp_csvs i on i.despacho = a.nroDespacho ";
+      "dolarobs d on d.fecha = convert(date, isnull(i.fecha_pago,'01-01-1990'), 105)    ";
     sql += "where i.fecha_pago like '%" + ano + "%' ";
-    sql += "and b.gastosAgencia <> '[]' ";
+    sql += "and b.gastosAgencia <> '[]'  ";
     sql += `and convert(date, isnull(i.fecha_pago,'01-01-1990'), 105) between '${fechaInicial}' and '${fechaFinal}' `;
+
     try {
       let data = await sequelize.query(sql);
       data = data[0];
