@@ -41,23 +41,30 @@ router.get(
     let fechaFinal = req.sanitize(req.params.fechaFinal);
 
     let sql = "";
-    sql += "select  b.idImportacion,  ";
+
+    sql += "select   ";
+    sql += "b.idImportacion,   ";
     sql += "b.nroDespacho,  ";
-    sql += "		b.refCliente,  ";
-    sql += "a.detalles,   ";
-    sql += "		a.packingList,  ";
-    sql += "b.tipoCambioAlternativo, ";
-    sql += "		isnull(d.valor, 0) tipoCambioBancoCentral, ";
+    sql += "b.refCliente,   ";
+    sql += "a.detalles,    ";
+    sql += "a.packingList,   ";
+    sql += "b.tipoCambioAlternativo,  ";
+    sql += "isnull(d.valor, 0) tipoCambioBancoCentral,  ";
     sql +=
-      "convert(varchar, convert(date, isnull(c.fechaPago,'01-01-1990'), 105)) as fechaPago  ";
-    sql += "from imp_importacion_archivos a   ";
-    sql += "join imp_importacions b on a.idImportacion=b.idImportacion  ";
-    sql += "join imp_gastos_aduanas c on c.idImportacion=b.idImportacion  ";
+      "convert(varchar, convert(date, isnull(i.fecha_pago,'01-01-1990'), 105)) as fechaPago ";
+    sql += "from  ";
+    sql += "imp_importacion_archivos a    ";
+    sql += "left join imp_importacions b on a.idImportacion=b.idImportacion   ";
+    sql += "left join imp_csvs i on i.despacho=a.nroDespacho ";
     sql +=
-      "left join dolarobs d on d.fecha = convert(varchar, convert(date, isnull(c.fechaPago,'01-01-1990'), 105)) ";
-    sql += "where b.estado=1 ";
-    sql += "and c.fechaAceptacion like '%" + ano + "%' ";
-    sql += `and convert(date, isnull(c.fechaPago,'01-01-1990'), 105) between '${fechaInicial}' and '${fechaFinal}' `;
+      "left join imp_gastos_aduanas c on c.idImportacion=b.idImportacion   ";
+    sql +=
+      "left join dolarobs d on d.fecha = convert(varchar, convert(date, isnull(i.fecha_pago,'01-01-1990'), 105)) ";
+    sql += "where b.estado=1  ";
+    sql += `and convert(varchar, convert(date, isnull(i.fecha_pago,'01-01-1990'), 105)) like  '%${ano}%' `;
+    sql += `and convert(date, isnull(i.fecha_pago,'01-01-1990'), 105) between '${fechaInicial}' and '${fechaFinal}' `;
+    sql += "order by a.idImportacion desc ";
+
     try {
       let data = await sequelize.query(sql);
       data = data[0];
