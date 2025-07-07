@@ -939,7 +939,7 @@ const procesaVentanaGastos = async (nroDespacho) => {
 
   console.log("Lee fechaAceptacion");
 
-  let fileNameUyD = "";
+  let fileNameUyD = await getFileNameUyd(nroDespacho);
 
   if (await notieneUyd(nroDespacho)) {
     console.log("Busca objeto UYD");
@@ -1724,6 +1724,18 @@ const notieneUyd = async (nroDespacho) => {
     }
   }
   return true;
+};
+
+const getFileNameUyd = async (nroDespacho) => {
+  let gastos = await imp_gastos_aduana.findOne({
+    where: { nroDespacho: nroDespacho },
+  });
+  if (gastos && gastos.nombreArchivoUyD) {
+    if (gastos.nombreArchivoUyD.trim() !== "") {
+      return gastos.nombreArchivoUyD;
+    }
+  }
+  return "";
 };
 
 exports.RpaRossiRoutes = router;
