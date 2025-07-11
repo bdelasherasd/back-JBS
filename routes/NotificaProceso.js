@@ -176,6 +176,12 @@ const procesaAgenda = async (req, res, taskdata) => {
   );
   const template = handlebars.compile(source);
 
+  const source2 = fs.readFileSync(
+    "./views/TempletaEmailNotificadorSinData.html",
+    "utf8"
+  );
+  const template2 = handlebars.compile(source2);
+
   console.log("Procesando Notificador...");
   let sql = "";
   sql +=
@@ -202,6 +208,16 @@ const procesaAgenda = async (req, res, taskdata) => {
     let data = await sequelize.query(sql);
     if (data[0].length > 0) {
       const htmlToSend = template({ data: data[0] });
+      await enviaCorreo(
+        taskdata.correos,
+        "Notificador de documentos pendientes de aprobar",
+        htmlToSend
+      );
+      console.log("Correo enviado a " + taskdata.correos);
+    } else {
+      const htmlToSend = template2({
+        mensaje: "No hay documentos pendientes de aprobar",
+      });
       await enviaCorreo(
         taskdata.correos,
         "Notificador de documentos pendientes de aprobar",

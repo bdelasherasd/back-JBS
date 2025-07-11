@@ -85,7 +85,7 @@ const procesaOcrSWIFTAereo = async (ocr, ocrPL, nroDespacho, tipo) => {
             const campos = await entreCodigos(limpio);
 
             let item = {
-              cantidad: campos[2],
+              cantidad: campos[3],
               codigo: campos[0],
               descripcion: campos[campos.length - 1],
               valor: campos[5] || "",
