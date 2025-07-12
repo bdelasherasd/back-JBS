@@ -31,7 +31,7 @@ router.options("*", async function (req, res) {
 });
 
 router.get(
-  "/list/:ano/:fechaIncial/:fechaFinal",
+  "/list/:ano/:fechaIncial/:fechaFinal/:nroDespacho",
   cors(),
   async function (req, res) {
     showLog(req, res);
@@ -39,6 +39,7 @@ router.get(
 
     let fechaInicial = req.sanitize(req.params.fechaIncial);
     let fechaFinal = req.sanitize(req.params.fechaFinal);
+    let nroDespacho = req.sanitize(req.params.nroDespacho);
 
     let sql = "";
 
@@ -62,9 +63,13 @@ router.get(
     sql +=
       "left join dolarobs d on d.fecha = convert(varchar, convert(date, isnull(i.fecha_pago,'01-01-1990'), 105))  ";
     sql += "where b.estado=1   ";
-    sql += `and convert(varchar, b.createdAt, 105) like  '%${ano}%'  `;
-    sql += `and convert(date,convert(varchar,b.createdAt,105),105) between '${fechaInicial}' and '${fechaFinal}'  `;
 
+    if (nroDespacho === "0") {
+      sql += `and convert(varchar, b.createdAt, 105) like  '%${ano}%'  `;
+      sql += `and convert(date,convert(varchar,b.createdAt,105),105) between '${fechaInicial}' and '${fechaFinal}'  `;
+    } else {
+      sql += `and b.nroDespacho like '%${nroDespacho}%'  `;
+    }
     sql += "order by a.idImportacion desc ";
 
     try {

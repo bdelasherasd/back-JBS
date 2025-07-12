@@ -54,6 +54,9 @@ app.use("/informeDetalles", informeDetallesRoutes);
 var informeAprobadosRoutes = require("./routes/informeAprobados");
 app.use("/informeAprobados", informeAprobadosRoutes);
 
+var generaSoftlandRoutes = require("./routes/generaSoftland");
+app.use("/generaSoftland", generaSoftlandRoutes);
+
 var {
   apiBancoCentralRoutes,
   reprogramaapiBancoCentral,
