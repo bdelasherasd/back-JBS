@@ -85,7 +85,10 @@ router.get(
 
         for (let [i, item] of data.entries()) {
           let detalles = item.detalles ? JSON.parse(item.detalles) : [];
-
+          let TotalPeso = 0;
+          for (let det of detalles) {
+            TotalPeso += parseFloat(det.peso);
+          }
           for (let det of detalles) {
             let skuData = dataSku.find((skuItem) => skuItem.sku === det.codigo);
             if (skuData) {
@@ -135,6 +138,7 @@ router.get(
               tipoCambioAlternativo: parseFloat(item.tipoCambioAlternativo),
               tipoCambioBancoCentral: parseFloat(item.tipoCambioBancoCentral),
               valorEnPesos: valorEnPesos,
+              TotalPeso: TotalPeso,
             });
           }
         }
