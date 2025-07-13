@@ -52,6 +52,7 @@ router.get(
     sql += "a.packingList,    ";
     sql += "b.tipoCambioAlternativo,   ";
     sql += "isnull(d.valor, 0) tipoCambioBancoCentral,   ";
+    sql += "b.unidadMedida,   ";
     sql +=
       "convert(varchar, convert(date, isnull(i.fecha_pago,'01-01-1990'), 105)) as fechaPago  ";
     sql += "from  imp_importacions b     ";
@@ -68,7 +69,7 @@ router.get(
       sql += `and convert(varchar, b.createdAt, 105) like  '%${ano}%'  `;
       sql += `and convert(date,convert(varchar,b.createdAt,105),105) between '${fechaInicial}' and '${fechaFinal}'  `;
     } else {
-      sql += `and b.nroDespacho like '%${nroDespacho}%'  `;
+      sql += `and b.nroDespacho = '${nroDespacho}'  `;
     }
     sql += "order by a.idImportacion desc ";
 
@@ -106,6 +107,12 @@ router.get(
                 parseFloat(det.valor) * item.tipoCambioBancoCentral;
             }
 
+            let pesoOrigen = parseFloat(det.peso);
+            if (item.unidadMedida === "LB") {
+              // Convertir de libras a kilogramos
+              pesoOrigen = pesoOrigen / 0.45359237; // 1 lb = 0.45359237 kg
+            }
+
             dataOut.push({
               nroDespacho: item.nroDespacho,
               refCliente: item.refCliente,
@@ -121,6 +128,7 @@ router.get(
               tipo: det.tipo,
               vecimiento: await getVencimiento(item.packingList),
               cantidad: parseFloat(det.cantidad),
+              pesoOrigen: pesoOrigen,
               peso: parseFloat(det.peso),
               valor: parseFloat(det.valor),
               fechaPago: item.fechaPago,

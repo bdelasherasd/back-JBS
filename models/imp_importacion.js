@@ -26,6 +26,7 @@ var imp_importacion = sequelize.define("imp_importacion", {
   tipoCambioAlternativo: type.DECIMAL(12, 4),
   usuarioModificaTipoCambio: type.STRING,
   fechaModificaTipoCambio: type.STRING,
+  unidadMedida: type.STRING,
 });
 //sequelize.sync({ alter: true });
 

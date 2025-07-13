@@ -63,6 +63,7 @@ const procesaOcrSWIFTAereo = async (ocr, ocrPL, nroDespacho, tipo) => {
         (texto.includes("DESCRIPTION") && texto.includes("WEIGHT"))
       ) {
         let indInicio = i + 1;
+        let unidadMedida = "";
         for (let k = indInicio; k < indInicio + 100; k++) {
           if (k >= tabla.length - 2) {
             break;
@@ -80,6 +81,14 @@ const procesaOcrSWIFTAereo = async (ocr, ocrPL, nroDespacho, tipo) => {
 
           if (!codigoInvalido) {
             const linea = lineaMas0.concat(lineaMas1, lineaMas2);
+
+            if (linea.join().includes(" LB")) {
+              await imp_importacion.update(
+                { unidadMedida: "LB" },
+                { where: { nroDespacho: nroDespacho } }
+              );
+            }
+
             const limpio = linea.filter((item) => !item.includes("\r"));
 
             const campos = await entreCodigos(limpio);
@@ -87,7 +96,7 @@ const procesaOcrSWIFTAereo = async (ocr, ocrPL, nroDespacho, tipo) => {
             let item = {
               cantidad: campos[3],
               codigo: campos[0],
-              descripcion: campos[campos.length - 1],
+              descripcion: "",
               valor: campos[5] || "",
               peso: campos[1],
 
