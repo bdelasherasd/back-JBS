@@ -152,7 +152,10 @@ router.get(
               Descripciones: "",
               pesoOrigen: pesoOrigen,
               kiloGramos: parseFloat(det.peso),
-              porcentajeCarga: (parseFloat(det.peso) * 100) / TotalPeso,
+              porcentajeCarga: (
+                (parseFloat(det.peso) * 100) /
+                TotalPeso
+              ).toFixed(2),
               dolares: parseFloat(det.valor),
               clp: valorEnPesos,
               clpUnitario: `=Z${lineaExcel}/W${lineaExcel}`,
@@ -289,27 +292,51 @@ router.get(
             .cell("AP")
             .value(item.sintitulo);
         }
-        workbook
-          .sheet(0)
-          .row(dataOut.length + 4)
-          .cell("A")
-          .value(
-            "************************FIN DEL ARCHIVO************************"
-          );
-        workbook
-          .sheet(0)
-          .row(dataOut.length + 4)
-          .cell("B")
-          .value(
-            "************************FIN DEL ARCHIVO************************"
-          );
-        workbook
-          .sheet(0)
-          .row(dataOut.length + 4)
-          .cell("C")
-          .value(
-            "************************FIN DEL ARCHIVO************************"
-          );
+
+        for (let i = dataOut.length + 4; i < 1000; i++) {
+          workbook.sheet(0).row(i).cell("A").value("");
+          workbook.sheet(0).row(i).cell("B").value("");
+          workbook.sheet(0).row(i).cell("C").value("");
+          workbook.sheet(0).row(i).cell("D").value("");
+          workbook.sheet(0).row(i).cell("E").value("");
+          workbook.sheet(0).row(i).cell("F").value("");
+          workbook.sheet(0).row(i).cell("G").value("");
+          workbook.sheet(0).row(i).cell("H").value("");
+          workbook.sheet(0).row(i).cell("I").value("");
+          workbook.sheet(0).row(i).cell("J").value("");
+          workbook.sheet(0).row(i).cell("K").value("");
+          workbook.sheet(0).row(i).cell("L").value("");
+          workbook.sheet(0).row(i).cell("M").value("");
+          workbook.sheet(0).row(i).cell("N").value("");
+          workbook.sheet(0).row(i).cell("O").value("");
+          workbook.sheet(0).row(i).cell("P").value("");
+          workbook.sheet(0).row(i).cell("Q").value("");
+          workbook.sheet(0).row(i).cell("R").value("");
+          workbook.sheet(0).row(i).cell("S").value("");
+          workbook.sheet(0).row(i).cell("T").value("");
+          workbook.sheet(0).row(i).cell("U").value("");
+          workbook.sheet(0).row(i).cell("V").value("");
+          workbook.sheet(0).row(i).cell("W").value("");
+          workbook.sheet(0).row(i).cell("X").value("");
+          workbook.sheet(0).row(i).cell("Y").value("");
+          workbook.sheet(0).row(i).cell("Z").value("");
+          workbook.sheet(0).row(i).cell("AA").value("");
+          workbook.sheet(0).row(i).cell("AB").value("");
+          workbook.sheet(0).row(i).cell("AC").value("");
+          workbook.sheet(0).row(i).cell("AD").value("");
+          workbook.sheet(0).row(i).cell("AE").value("");
+          workbook.sheet(0).row(i).cell("AF").value("");
+          workbook.sheet(0).row(i).cell("AG").value("");
+          workbook.sheet(0).row(i).cell("AH").value("");
+          workbook.sheet(0).row(i).cell("AI").value("");
+          workbook.sheet(0).row(i).cell("AJ").value("");
+          workbook.sheet(0).row(i).cell("AK").value("");
+          workbook.sheet(0).row(i).cell("AL").value("");
+          workbook.sheet(0).row(i).cell("AM").value("");
+          workbook.sheet(0).row(i).cell("AN").value("");
+          workbook.sheet(0).row(i).cell("AO").value("");
+          workbook.sheet(0).row(i).cell("AP").value("");
+        }
 
         const buffer = await workbook.outputAsync();
         res.setHeader(
