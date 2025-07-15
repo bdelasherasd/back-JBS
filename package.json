@@ -43,6 +43,7 @@
         "path": "^0.12.7",
         "selenium-webdriver": "^4.31.0",
         "sequelize": "^6.37.5",
-        "xlsx": "^0.18.5"
+        "xlsx": "^0.18.5",
+        "xlsx-populate": "^1.21.0"
     }
 }

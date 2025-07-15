@@ -54,6 +54,12 @@ app.use("/informeDetalles", informeDetallesRoutes);
 var informeAprobadosRoutes = require("./routes/informeAprobados");
 app.use("/informeAprobados", informeAprobadosRoutes);
 
+var informeAprobadosConFormulasRoutes = require("./routes/informeAprobadosConFormulas");
+app.use("/informeAprobadosConFormulas", informeAprobadosConFormulasRoutes);
+
+var informeAprobadosModificaExcelRoutes = require("./routes/informeAprobadosModificaExcel");
+app.use("/informeAprobadosModificaExcel", informeAprobadosModificaExcelRoutes);
+
 var generaSoftlandRoutes = require("./routes/generaSoftland");
 app.use("/generaSoftland", generaSoftlandRoutes);
 
