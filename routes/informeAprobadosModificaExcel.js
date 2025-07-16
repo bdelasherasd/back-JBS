@@ -152,10 +152,9 @@ router.get(
               Descripciones: "",
               pesoOrigen: pesoOrigen,
               kiloGramos: parseFloat(det.peso),
-              porcentajeCargaImportacion: (
-                (parseFloat(det.peso) * 100) /
-                TotalPeso
-              ).toFixed(2),
+              porcentajeCargaImportacion: parseFloat(
+                (parseFloat(det.peso) / TotalPeso).toFixed(2)
+              ),
               porcentajeCargaFactura: 0,
               dolares: parseFloat(det.valor),
               clp: valorEnPesos,
@@ -196,8 +195,8 @@ router.get(
         // Calcular porcentajeCargaFactura
         dataOut = dataOut.map((item) => ({
           ...item,
-          porcentajeCargaFactura: ((item.kilos * 100) / item.totPeso).toFixed(
-            2
+          porcentajeCargaFactura: parseFloat(
+            (item.kilos / item.totPeso).toFixed(2)
           ),
         }));
 
