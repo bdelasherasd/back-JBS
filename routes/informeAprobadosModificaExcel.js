@@ -152,10 +152,11 @@ router.get(
               Descripciones: "",
               pesoOrigen: pesoOrigen,
               kiloGramos: parseFloat(det.peso),
-              porcentajeCarga: (
+              porcentajeCargaImportacion: (
                 (parseFloat(det.peso) * 100) /
                 TotalPeso
               ).toFixed(2),
+              porcentajeCargaFactura: 0,
               dolares: parseFloat(det.valor),
               clp: valorEnPesos,
               clpUnitario: `=Z${lineaExcel}/W${lineaExcel}`,
@@ -176,6 +177,29 @@ router.get(
             });
           }
         }
+
+        // Agrupar por nroFacturaOrigen y calcular totPeso
+        const totPesoPorFactura = dataOut.reduce((acc, item) => {
+          if (!acc[item.nroFacturaOrigen]) {
+            acc[item.nroFacturaOrigen] = 0;
+          }
+          acc[item.nroFacturaOrigen] += item.kilos;
+          return acc;
+        }, {});
+
+        // Agregar totPeso a cada elemento de dataOut
+        dataOut = dataOut.map((item) => ({
+          ...item,
+          totPeso: totPesoPorFactura[item.nroFacturaOrigen],
+        }));
+
+        // Calcular porcentajeCargaFactura
+        dataOut = dataOut.map((item) => ({
+          ...item,
+          porcentajeCargaFactura: ((item.kilos * 100) / item.totPeso).toFixed(
+            2
+          ),
+        }));
 
         const templatePath = path.join("views", "FormatoArchivoStock.xlsx");
         const workbook = await XlsxPopulate.fromFileAsync(templatePath);
@@ -259,6 +283,11 @@ router.get(
           workbook
             .sheet(0)
             .row(i + 4)
+            .cell("U")
+            .value(item.Descripciones);
+          workbook
+            .sheet(0)
+            .row(i + 4)
             .cell("V")
             .value(item.pesoOrigen);
           workbook
@@ -270,7 +299,7 @@ router.get(
             .sheet(0)
             .row(i + 4)
             .cell("X")
-            .value(item.porcentajeCarga);
+            .value(item.porcentajeCargaFactura);
           workbook
             .sheet(0)
             .row(i + 4)
