@@ -595,6 +595,9 @@ const procesaDetalles = async (nroDespacho) => {
     console.log("Inicio Ventana Gastos", nroDespacho);
     await procesaVentanaGastos(item.nroDespacho);
 
+    console.log("Inicio Ventana Carga", nroDespacho);
+    await procesaVentanaCarga(item.nroDespacho);
+
     console.log("Inicio Ventana Doctos", nroDespacho);
     await procesaVentanaDoctos(item.nroDespacho);
 
@@ -627,6 +630,60 @@ const saveImportacion = async (item) => {
   } catch (error) {
     console.log(error);
   }
+};
+
+const procesaVentanaCarga = async (nroDespacho) => {
+  var tabCarga = null;
+  while (true) {
+    try {
+      tabCarga = await driver.wait(
+        until.elementLocated(By.xpath('//*[@id="myTab"]/li[3]/a/span')),
+        20000
+      );
+      await tabCarga.click();
+      break;
+    } catch (e) {
+      console.log("Esperando tabCarga");
+      await driver.sleep(2000);
+    }
+  }
+
+  var grupoDetalle = await getObjeto('//*[@id="tCarga"]');
+  var grupoDetalleHTML = null;
+  var retryes = 0;
+  while (true) {
+    try {
+      grupoDetalleHTML = await grupoDetalle.getAttribute("innerHTML");
+      break;
+    } catch (e) {
+      retryes++;
+      if (retryes > 5) {
+        console.log("Error al obtener grupoDetalle", e);
+        break;
+      }
+      console.log("Esperando grupoDetalle");
+      grupoDetalle = await getObjeto(
+        '//*[@id="main-modal"]/div/div/div[2]/div/div/div/div'
+      );
+      await driver.sleep(1000);
+    }
+  }
+  var fechaETA = "";
+  var t = "";
+  try {
+    t = grupoDetalleHTML.split("Fecha Llegada")[1].split("Fecha Liberación")[0];
+    var fechaMatch = t.match(/\d{2}-\d{2}-\d{4}/);
+    if (fechaMatch) {
+      fechaETA = fechaMatch[0];
+    }
+  } catch (error) {
+    t = "";
+  }
+  console.log("Fecha ETA", fechaETA);
+  await imp_importacion.update(
+    { fechaETA: fechaETA },
+    { where: { nroDespacho: nroDespacho } }
+  );
 };
 
 const procesaVentanaDoctos = async (nroDespacho) => {
