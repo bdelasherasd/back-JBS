@@ -1081,6 +1081,8 @@ const procesaVentanaGastos = async (nroDespacho) => {
   } catch (error) {
     console.log("hay gastos");
   }
+  var randomNumber = Math.floor(Math.random() * (2000 - 1500 + 1)) + 1500;
+  await driver.sleep(randomNumber);
 
   if (noFacturado.includes("no está facturado")) {
     var item = {
