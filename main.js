@@ -42,6 +42,9 @@ app.use("/privilegio", privilegioRoutes);
 var cargaSkuRoutes = require("./routes/cargaSku");
 app.use("/cargaSku", cargaSkuRoutes);
 
+var cargaProveedoresRoutes = require("./routes/cargaProveedores");
+app.use("/cargaProveedores", cargaProveedoresRoutes);
+
 var importacionesRoutes = require("./routes/importaciones");
 app.use("/importaciones", importacionesRoutes);
 
