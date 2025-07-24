@@ -1081,8 +1081,6 @@ const procesaVentanaGastos = async (nroDespacho) => {
   } catch (error) {
     console.log("hay gastos");
   }
-  var randomNumber = Math.floor(Math.random() * (2000 - 1500 + 1)) + 1500;
-  await driver.sleep(randomNumber);
 
   if (noFacturado.includes("no está facturado")) {
     var item = {
@@ -1314,6 +1312,15 @@ const procesaVentanaGastos = async (nroDespacho) => {
     '//*[@id="contenedor-gastos"]/div[1]/div[2]/a[1]'
   );
   if (excelDesembolsos) {
+    const elementVisible = await driver.wait(
+      until.elementIsVisible(excelDesembolsos),
+      5000
+    );
+    const elementClickable = await driver.wait(
+      until.elementIsEnabled(excelDesembolsos),
+      5000
+    );
+
     await excelDesembolsos.click();
 
     var fileName = await obtenerXlsMasNuevo(downloadDir);
