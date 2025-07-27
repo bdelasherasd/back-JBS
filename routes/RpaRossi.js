@@ -1804,5 +1804,63 @@ const getFileNameUyd = async (nroDespacho) => {
   return "";
 };
 
+router.get(
+  "/prorrateaDescuento/:nroDespacho/:monto",
+  cors(),
+  async function (req, res) {
+    let nroDespacho = req.params.nroDespacho;
+    let monto = parseFloat(req.params.monto);
+    if (isNaN(monto)) {
+      res.send({
+        error: true,
+        message: "Monto inválido",
+      });
+      return;
+    }
+    // Lógica para prorratear el descuento
+    let data = await imp_importacion_archivo.findOne({
+      where: { nroDespacho: nroDespacho },
+    });
+    if (!data) {
+      res.send({
+        error: true,
+        message: "No existe el despacho",
+      });
+      return;
+    }
+    let detalles = JSON.parse(data.detalles);
+    if (!Array.isArray(detalles) || detalles.length === 0) {
+      res.send({
+        error: true,
+        message: "No hay detalles para prorratear",
+      });
+      return;
+    }
+
+    let totalPeso = 0;
+    for (let detalle of detalles) {
+      totalPeso += parseFloat(detalle.peso) || 0;
+    }
+    let descuentoPorKilo = monto / totalPeso;
+    for (let detalle of detalles) {
+      let descuento = (parseFloat(detalle.peso) || 0) * descuentoPorKilo;
+      let valor = (parseFloat(detalle.valor) || 0) - descuento;
+      valor = valor.toFixed(2);
+      detalle.valor = valor.toString();
+    }
+    // Actualizar los detalles en la base de datos
+    await imp_importacion_archivo.update(
+      { detalles: JSON.stringify(detalles) },
+      { where: { nroDespacho: nroDespacho } }
+    );
+
+    res.send({
+      error: false,
+      message: "Descuento prorrateado correctamente",
+      detalles: detalles, // Retorna los detalles actualizados
+    });
+  }
+);
+
 exports.RpaRossiRoutes = router;
 exports.reprogramaRpaRossi = reprograma;
