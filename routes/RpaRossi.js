@@ -36,6 +36,7 @@ var timeZone = process.env.TIMEZONE;
 var pdfApiKey = process.env.APIKEY_PDF;
 var urlOCR1 = process.env.URL_OCR1;
 var urlOCR2 = process.env.URL_OCR2;
+var dias_rpa = process.env.DIAS_RPA || 30;
 
 const permisos = {
   origin: "*",
@@ -83,7 +84,7 @@ router.post("/agenda", cors(), async function (req, res) {
           taskdata.dia
       );
       const fechaInicial = new Date();
-      fechaInicial.setDate(fechaInicial.getDate() - 30);
+      fechaInicial.setDate(fechaInicial.getDate() - dias_rpa);
       const fecha = fechaInicial.toISOString().split("T")[0];
       (taskdata["referencia"] = "lote"), (taskdata["fechaDesde"] = fecha);
       console.log("Fecha Desde", fecha);
@@ -1838,15 +1839,28 @@ router.get(
     }
 
     let totalPeso = 0;
+    let totalValor = 0;
     for (let detalle of detalles) {
       totalPeso += parseFloat(detalle.peso) || 0;
+      totalValor += parseFloat(detalle.valor) || 0;
     }
+    let totalValorConDescuento = totalValor - monto;
+
+    let totalValorConDescuentoCalculado = 0;
     let descuentoPorKilo = monto / totalPeso;
     for (let detalle of detalles) {
       let descuento = (parseFloat(detalle.peso) || 0) * descuentoPorKilo;
       let valor = (parseFloat(detalle.valor) || 0) - descuento;
       valor = valor.toFixed(2);
       detalle.valor = valor.toString();
+      totalValorConDescuentoCalculado += parseFloat(detalle.valor) || 0;
+    }
+    let diferencia = totalValorConDescuento - totalValorConDescuentoCalculado;
+    if (Math.abs(diferencia) > 0.01) {
+      // Ajustar el último detalle para compensar la diferencia
+      let ultimoDetalle = detalles[detalles.length - 1];
+      let ultimoValor = parseFloat(ultimoDetalle.valor) || 0;
+      ultimoDetalle.valor = (ultimoValor + diferencia).toFixed(2).toString();
     }
     // Actualizar los detalles en la base de datos
     await imp_importacion_archivo.update(
