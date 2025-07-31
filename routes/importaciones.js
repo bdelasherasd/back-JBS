@@ -9,6 +9,7 @@ var imp_importacion = require("../models/imp_importacion");
 var imp_importacion_archivo = require("../models/imp_importacion_archivo");
 const showLog = require("../middleware/showLog");
 const imp_gastos_aduana = require("../models/imp_gastos_aduana");
+const imp_csv = require("../models/imp_csv");
 
 const permisos = {
   origin: "*",
@@ -47,6 +48,10 @@ router.get("/listImportaciones", cors(), async function (req, res) {
   sql += "when '0' then 'Ingresado' ";
   sql += "when '1' then 'Aprobado' ";
   sql += "end estado, ";
+  sql += "case isnull(imp_importacions.estadoSoftland, '0') ";
+  sql += "when '0' then 'No' ";
+  sql += "when '1' then 'Si' ";
+  sql += "end estadoSoftland, ";
   sql += "convert(varchar,imp_importacions.createdAt,111) as fechaCreacion,  ";
   sql += "imp_importacion_archivos.detalles,  ";
   sql += "imp_importacion_archivos.packingList,  ";
@@ -119,6 +124,21 @@ router.get("/getImport/:id", cors(), async function (req, res) {
   }
 });
 
+router.get("/getCsv/:id", cors(), async function (req, res) {
+  showLog(req, res);
+  try {
+    let data = await imp_csv.findOne({
+      where: {
+        despacho: req.params.id,
+      },
+    });
+    //res.status(200).json({data})
+    res.send(data);
+  } catch (error) {
+    console.log(error.message);
+  }
+});
+
 router.post("/apruebaImportacion", cors(), async function (req, res) {
   showLog(req, res);
 
@@ -127,6 +147,48 @@ router.post("/apruebaImportacion", cors(), async function (req, res) {
     estado: "1",
     usuarioAprueba: req.sanitize(req.body.usuarioAprueba),
     fechaAprueba: `${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`,
+  };
+  try {
+    let data = await imp_importacion.update(datos, {
+      where: {
+        idImportacion: datos.idImportacion,
+      },
+    });
+    res.send(data);
+  } catch (error) {
+    console.log(error.message);
+  }
+});
+
+router.post("/softlandImportacion", cors(), async function (req, res) {
+  showLog(req, res);
+
+  let datos = {
+    idImportacion: req.sanitize(req.body.idImportacion),
+    estadoSoftland: "1",
+    estadoSoftlandFecha: `${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`,
+    estadoSoftlandUsuario: req.sanitize(req.body.usuarioAprueba),
+  };
+  try {
+    let data = await imp_importacion.update(datos, {
+      where: {
+        idImportacion: datos.idImportacion,
+      },
+    });
+    res.send(data);
+  } catch (error) {
+    console.log(error.message);
+  }
+});
+
+router.post("/desSoftlandImportacion", cors(), async function (req, res) {
+  showLog(req, res);
+
+  let datos = {
+    idImportacion: req.sanitize(req.body.idImportacion),
+    estadoSoftland: "0",
+    estadoSoftlandUsuario: req.sanitize(req.body.usuarioAprueba),
+    estadoSoftlandFecha: `${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`,
   };
   try {
     let data = await imp_importacion.update(datos, {

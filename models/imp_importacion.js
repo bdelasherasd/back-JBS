@@ -27,6 +27,9 @@ var imp_importacion = sequelize.define("imp_importacion", {
   usuarioModificaTipoCambio: type.STRING,
   fechaModificaTipoCambio: type.STRING,
   unidadMedida: type.STRING,
+  estadoSoftland: type.STRING,
+  estadoSoftlandFecha: type.STRING,
+  estadoSoftlandUsuario: type.STRING,
 });
 //sequelize.sync({ alter: true });
 

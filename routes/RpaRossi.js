@@ -216,6 +216,7 @@ const { Options } = require("selenium-webdriver/firefox");
 const downloadDir = path.resolve("./", "pdf");
 
 const options = new Options()
+  .setPreference("browser.download.alwaysOpenPanel", false)
   .setPreference("browser.download.folderList", 2)
   .setPreference("browser.download.dir", downloadDir)
   .setPreference("browser.helperApps.neverAsk.saveToDisk", "application/pdf")
