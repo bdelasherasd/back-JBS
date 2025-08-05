@@ -121,15 +121,17 @@ router.get(
             }
 
             let tc = 0;
+            let alternativo = false;
             if (item.tipoCambioAlternativo != 0) {
               tc = item.tipoCambioAlternativo;
+              alternativo = true;
             } else {
               tc = item.tipoCambioBancoCentral;
             }
 
             lineaExcel++;
             dataOut.push({
-              bodega: "Historico",
+              bodega: "HISTORICO",
               codigo: det.codigo,
               producto: det.producto,
               proteina: det.proteina,
@@ -141,12 +143,16 @@ router.get(
               cliente: "3) STOCK",
               kilos: parseFloat(det.peso),
               costoneto: `=+AE${lineaExcel}`,
-              vencimiento: await getVencimiento(item.packingList),
+              vencimiento: convierteFecha(
+                await getVencimiento(item.packingList)
+              ),
               valorizacionTotal: `=+K${lineaExcel}*L${lineaExcel}`,
               margen3porCiento: `=+L${lineaExcel}/(1-0,03)`,
               margen7porCiento: `=+L${lineaExcel}/(1-0,07)`,
-              nroFacturaOrigen: item.refCliente,
+              //nroFacturaOrigen: item.refCliente,
+              nroFacturaOrigen: det.invoiceNumber,
               tc: tc,
+              alternativo: alternativo,
               fecha: convierteFecha(item.fechaPago),
               cajas: `=+AN${lineaExcel}`,
               Descripciones: "",
@@ -254,11 +260,11 @@ router.get(
             .row(i + 4)
             .cell("J")
             .value(item.cliente);
-          workbook
-            .sheet(0)
-            .row(i + 4)
-            .cell("K")
-            .value(item.kilos);
+          // workbook
+          //   .sheet(0)
+          //   .row(i + 4)
+          //   .cell("K")
+          //   .value(item.kilos);
           workbook
             .sheet(0)
             .row(i + 4)
@@ -273,12 +279,14 @@ router.get(
             .sheet(0)
             .row(i + 4)
             .cell("R")
-            .value(item.tc);
+            .value(item.tc)
+            .style("fill", item.alternativo ? "FFFF00" : "FFFFFF"); // Fondo amarillo si alternativo es true
           workbook
             .sheet(0)
             .row(i + 4)
             .cell("S")
-            .value(item.fecha);
+            .value(item.fecha)
+            .style("numberFormat", "dd/mm/yyyy");
           workbook
             .sheet(0)
             .row(i + 4)
@@ -304,11 +312,11 @@ router.get(
             .row(i + 4)
             .cell("Y")
             .value(item.dolares);
-          workbook
-            .sheet(0)
-            .row(i + 4)
-            .cell("Z")
-            .value(item.clp);
+          // workbook
+          //   .sheet(0)
+          //   .row(i + 4)
+          //   .cell("Z")
+          //   .value(item.clp);
           workbook
             .sheet(0)
             .row(i + 4)
@@ -388,47 +396,16 @@ router.get(
 
 const convierteFecha = (fecha) => {
   let d = fecha.split("-");
-  let mes = d[1];
-  let mmes = "";
-  switch (mes) {
-    case "01":
-      mmes = "Ene";
-      break;
-    case "02":
-      mmes = "Feb";
-      break;
-    case "03":
-      mmes = "Mar";
-      break;
-    case "04":
-      mmes = "Abr";
-      break;
-    case "05":
-      mmes = "May";
-      break;
-    case "06":
-      mmes = "Jun";
-      break;
-    case "07":
-      mmes = "Jul";
-      break;
-    case "08":
-      mmes = "Ago";
-      break;
-    case "09":
-      mmes = "Sep";
-      break;
-    case "10":
-      mmes = "Oct";
-      break;
-    case "11":
-      mmes = "Nov";
-      break;
-    case "12":
-      mmes = "Dic";
-      break;
+  let dia = d[0];
+  let mmes = d[1];
+  if (dia.length === 1) {
+    dia = "0" + dia;
   }
-  return `${mmes}-${d[0]}`;
+  if (mmes.length === 1) {
+    mmes = "0" + mmes;
+  }
+  let anno = d[2];
+  return `${dia}/${mmes}/${anno}`;
 };
 
 const getVencimiento = async (packingList) => {
