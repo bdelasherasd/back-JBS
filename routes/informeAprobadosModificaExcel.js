@@ -269,7 +269,8 @@ router.get(
             .sheet(0)
             .row(i + 4)
             .cell("M")
-            .value(item.vencimiento);
+            .value(item.vencimiento)
+            .style("numberFormat", "dd/mm/yyyy");
           workbook
             .sheet(0)
             .row(i + 4)
@@ -396,7 +397,7 @@ router.get(
 
 const convierteFecha = (fecha) => {
   let d = fecha.split("-");
-  let dia = d[0];
+  let dia = d[2];
   let mmes = d[1];
   if (dia.length === 1) {
     dia = "0" + dia;
@@ -404,7 +405,7 @@ const convierteFecha = (fecha) => {
   if (mmes.length === 1) {
     mmes = "0" + mmes;
   }
-  let anno = d[2];
+  let anno = d[0];
   return `${dia}/${mmes}/${anno}`;
 };
 
