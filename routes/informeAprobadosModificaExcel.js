@@ -287,7 +287,7 @@ router.get(
             .row(i + 4)
             .cell("S")
             .value(item.fecha)
-            .style("numberFormat", "dd/mm/yyyy");
+            .style("numberFormat", "mmm-yy");
           workbook
             .sheet(0)
             .row(i + 4)
