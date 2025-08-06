@@ -269,7 +269,7 @@ router.get(
             .sheet(0)
             .row(i + 4)
             .cell("M")
-            .value(item.vencimiento)
+            .value(new Date(item.vencimiento))
             .style("numberFormat", "dd/mm/yyyy");
           workbook
             .sheet(0)
@@ -286,7 +286,8 @@ router.get(
             .sheet(0)
             .row(i + 4)
             .cell("S")
-            .value(item.fecha)
+            .value(new Date(item.fecha))
+            //.style("numberFormat", "dd/mm/yyyy");
             .style("numberFormat", "mmm-yy");
           workbook
             .sheet(0)
@@ -406,7 +407,7 @@ const convierteFecha = (fecha) => {
     mmes = "0" + mmes;
   }
   let anno = d[0];
-  return `${dia}/${mmes}/${anno}`;
+  return `${mmes}/${dia}/${anno}`;
 };
 
 const getVencimiento = async (packingList) => {
