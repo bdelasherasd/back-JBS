@@ -275,6 +275,7 @@ const procesaAgenda = async (req, res, taskdata) => {
   if (taskdata.referencia == "lote") {
     await procesaDetallesLote(taskdata.fechaDesde);
   } else {
+    await recuperaCsv(taskdata.nroDespacho);
     await procesaDetalles(taskdata.nroDespacho);
   }
 
@@ -301,6 +302,41 @@ const saveCsv = async (item) => {
     }
   } catch (error) {
     console.log(error);
+  }
+};
+
+const recuperaCsv = async (nroDespacho) => {
+  var btn = await getObjeto('//*[@id="tabla_wrapper"]/div[1]/div[2]/button/i');
+  await btn.click();
+
+  await driver.sleep(2000);
+
+  var fileName = await obtenerCsvMasNuevo(downloadDir);
+  var filePath = path.join(downloadDir, fileName);
+
+  const results = await procesaCsv(filePath);
+
+  const despachos = [];
+
+  //const despachosConFactura = await getDespachoConFactura();
+  const despachosConFactura = [];
+
+  for (let [i, e] of results.entries()) {
+    let eta = e["eta"];
+    let via = e["via_transporte"].trim();
+    if (
+      !eta.includes("No Ingresada") &&
+      !eta.includes("Pendiente") &&
+      via != ""
+    ) {
+      if (e["despacho"] == nroDespacho) {
+        await saveCsv(e);
+        despachos.push({
+          despacho: e.despacho,
+          referencia: e.referencia_cliente,
+        });
+      }
+    }
   }
 };
 
