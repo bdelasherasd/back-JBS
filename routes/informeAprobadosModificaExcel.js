@@ -220,41 +220,41 @@ router.get(
             .row(i + 4)
             .cell("B")
             .value(item.codigo);
-          workbook
-            .sheet(0)
-            .row(i + 4)
-            .cell("C")
-            .value(item.producto);
-          workbook
-            .sheet(0)
-            .row(i + 4)
-            .cell("D")
-            .value(item.proteina);
-          workbook
-            .sheet(0)
-            .row(i + 4)
-            .cell("E")
-            .value(item.origen);
-          workbook
-            .sheet(0)
-            .row(i + 4)
-            .cell("F")
-            .value(item.marca);
-          workbook
-            .sheet(0)
-            .row(i + 4)
-            .cell("G")
-            .value(item.estado);
-          workbook
-            .sheet(0)
-            .row(i + 4)
-            .cell("H")
-            .value(item.calidad);
-          workbook
-            .sheet(0)
-            .row(i + 4)
-            .cell("I")
-            .value(item.tipo);
+          // workbook
+          //   .sheet(0)
+          //   .row(i + 4)
+          //   .cell("C")
+          //   .value(item.producto);
+          // workbook
+          //   .sheet(0)
+          //   .row(i + 4)
+          //   .cell("D")
+          //   .value(item.proteina);
+          // workbook
+          //   .sheet(0)
+          //   .row(i + 4)
+          //   .cell("E")
+          //   .value(item.origen);
+          // workbook
+          //   .sheet(0)
+          //   .row(i + 4)
+          //   .cell("F")
+          //   .value(item.marca);
+          // workbook
+          //   .sheet(0)
+          //   .row(i + 4)
+          //   .cell("G")
+          //   .value(item.estado);
+          // workbook
+          //   .sheet(0)
+          //   .row(i + 4)
+          //   .cell("H")
+          //   .value(item.calidad);
+          // workbook
+          //   .sheet(0)
+          //   .row(i + 4)
+          //   .cell("I")
+          //   .value(item.tipo);
           workbook
             .sheet(0)
             .row(i + 4)
