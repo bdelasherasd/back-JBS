@@ -4,20 +4,22 @@ var imp_importacion_archivo = require("../models/imp_importacion_archivo");
 var imp_importacion = require("../models/imp_importacion");
 var { valCantidad, valCodigo, valFecha, valValor } = require("./validaciones");
 var getInvoiceNumber = require("./getInvoiceNumber");
+var verificaCargado = require("./verificaCargado");
 
 const procesaOcrSeara = async (ocr, ocrPL, nroDespacho) => {
   let dataImportacion = await imp_importacion.findOne({
     where: { nroDespacho: nroDespacho },
   });
   if (dataImportacion.tipoTranporte.toUpperCase() == "TERRESTRE") {
-    return procesaOcrSearaTerrestre(ocr, ocrPL, nroDespacho);
+    await procesaOcrSearaTerrestre(ocr, ocrPL, nroDespacho);
   }
   if (dataImportacion.tipoTranporte.toUpperCase() == "MARITIMO") {
-    return procesaOcrSearaMaritimo(ocr, ocrPL, nroDespacho);
+    await procesaOcrSearaMaritimo(ocr, ocrPL, nroDespacho);
   }
   if (dataImportacion.tipoTranporte.toUpperCase() == "AEREO") {
-    return procesaOcrSearaAereo(ocr, ocrPL, nroDespacho);
+    await procesaOcrSearaAereo(ocr, ocrPL, nroDespacho);
   }
+  await verificaCargado(dataImportacion.refCliente, nroDespacho);
 };
 
 const getPeso = async (ocr, ocrPL) => {
