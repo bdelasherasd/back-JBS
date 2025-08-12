@@ -19,7 +19,7 @@ const procesaOcrSeara = async (ocr, ocrPL, nroDespacho) => {
   if (dataImportacion.tipoTranporte.toUpperCase() == "AEREO") {
     await procesaOcrSearaAereo(ocr, ocrPL, nroDespacho);
   }
-  await verificaCargado(dataImportacion.refCliente, nroDespacho);
+  await verificaCargado(dataImportacion.refCliente, nroDespacho, "SEARA");
 };
 
 const getPeso = async (ocr, ocrPL) => {

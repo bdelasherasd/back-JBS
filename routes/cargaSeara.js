@@ -59,7 +59,14 @@ async function processExcel(filePath, sheetName) {
   const worksheet = workbook.Sheets[sheetName];
 
   //const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-  const jsonData2 = XLSX.utils.sheet_to_json(worksheet, { range: 1 });
+  // Convertir hasta la columna AM (columna 39, ya que A=1, AM=39)
+  const range = XLSX.utils.decode_range(worksheet["!ref"]);
+  range.s.r = 1; // 0-based index, fila = 1
+  range.e.c = 38; // 0-based index, AM = 38
+  const jsonData2 = XLSX.utils.sheet_to_json(worksheet, {
+    range: range,
+    defval: " ", // Incluye las columnas sin valores, asignando "" por defecto
+  });
 
   await eliminaExistentes(jsonData2);
 
@@ -87,7 +94,7 @@ async function processExcel(filePath, sheetName) {
     // }
     //console.log(rowCount, row);
 
-    if (row.Factura && row.Factura !== "") {
+    if (row.Factura && row.Factura.trim() !== "") {
       let peso = "";
 
       if (sheetName === "CIERRES RODOVIARIOS") {
@@ -138,7 +145,7 @@ function toFixedExact(num, decimals) {
 
 async function eliminaExistentes(jsonData) {
   for (const row of jsonData) {
-    if (row.Factura && row.Factura !== "") {
+    if (row.Factura && row.Factura.trim() !== "") {
       await imp_carga.destroy({
         where: {
           factura: row.Factura,
