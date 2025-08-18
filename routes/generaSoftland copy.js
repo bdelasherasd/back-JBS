@@ -123,20 +123,11 @@ router.get(
               const [ano, mes, dia] = fechaVenc.split("-");
               fechaVenc = `${dia}-${mes}-${ano}`;
             }
-            let Numeros = det.invoiceNumber.replace(/\D/g, "");
-            let soloNumeros = Numeros.replace(/\D/g, "");
-            soloNumeros = soloNumeros.slice(-7);
-
-            let hoy = new Date();
-            let dia = String(hoy.getDate()).padStart(2, "0");
-            let mes = String(hoy.getMonth() + 1).padStart(2, "0");
-            let ano = hoy.getFullYear();
-            let fechaHoy = `${dia}-${mes}-${ano}`;
 
             dataOut.push({
               codigo_de_bodega: "002",
-              numero_de_folio_guia_de_entrada: soloNumeros, //det.invoiceNumber, // item.nroDespacho,
-              Fecha_de_generacion_guia_de_entrada: fechaHoy, //item.FechaIngreso,
+              numero_de_folio_guia_de_entrada: det.invoiceNumber, // item.nroDespacho,
+              Fecha_de_generacion_guia_de_entrada: item.FechaIngreso,
               Concepto_de_entrada_a_bodega: "02",
               Descripcion: det.invoiceNumber, //productoCajas,
               Codigo_Proveedor: det.proveedor,
