@@ -9,6 +9,7 @@ const showLog = require("../middleware/showLog");
 const XLSX = require("xlsx");
 const fs = require("fs");
 const { ok } = require("assert");
+const { type } = require("os");
 
 require("dotenv").config({ path: "variables.env" });
 
@@ -94,7 +95,14 @@ async function processExcel(filePath, sheetName) {
     // }
     //console.log(rowCount, row);
 
-    if (row.Factura && row.Factura.trim() !== "") {
+    let facturaString = "";
+    if (typeof row.Factura !== "string") {
+      facturaString = String(row.Factura);
+    } else {
+      facturaString = row.Factura;
+    }
+
+    if (facturaString.trim() !== "") {
       let peso = "";
 
       if (sheetName === "CIERRES RODOVIARIOS") {
@@ -107,7 +115,7 @@ async function processExcel(filePath, sheetName) {
       try {
         const cargaData = {
           proveedor: "SEARA",
-          factura: row.Factura,
+          factura: facturaString,
           sku: row.Sigla,
           cantidad: row.Cajas,
           peso: peso,
@@ -144,13 +152,25 @@ function toFixedExact(num, decimals) {
 }
 
 async function eliminaExistentes(jsonData) {
-  for (const row of jsonData) {
-    if (row.Factura && row.Factura.trim() !== "") {
-      await imp_carga.destroy({
-        where: {
-          factura: row.Factura,
-        },
-      });
+  for (const [index, row] of jsonData.entries()) {
+    if (row.Factura) {
+      //console.log(index, row.Factura, typeof row.Factura);
+
+      let facturaString = "";
+
+      if (typeof row.Factura !== "string") {
+        facturaString = String(row.Factura);
+      } else {
+        facturaString = row.Factura;
+      }
+
+      if (facturaString.trim() !== "") {
+        await imp_carga.destroy({
+          where: {
+            factura: facturaString,
+          },
+        });
+      }
     }
   }
 }
