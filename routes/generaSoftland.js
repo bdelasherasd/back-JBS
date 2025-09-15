@@ -123,10 +123,13 @@ router.get(
               const [ano, mes, dia] = fechaVenc.split("-");
               fechaVenc = `${dia}-${mes}-${ano}`;
             }
+            let soloNumerospartida =  det.invoiceNumber;
+                soloNumerospartida =  soloNumerospartida.slice(-20);
             let Numeros = det.invoiceNumber.replace(/\D/g, "");
             let soloNumeros = Numeros.replace(/\D/g, "");
-            let soloNumerospartida =  soloNumeros.slice(-20);
-            soloNumeros = soloNumeros.slice(-7);
+                soloNumeros = soloNumeros.slice(-7);
+            
+            
             let hoy = new Date();
             let dia = String(hoy.getDate()).padStart(2, "0");
             let mes = String(hoy.getMonth() + 1).padStart(2, "0");
