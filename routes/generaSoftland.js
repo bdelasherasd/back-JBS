@@ -125,8 +125,8 @@ router.get(
             }
             let Numeros = det.invoiceNumber.replace(/\D/g, "");
             let soloNumeros = Numeros.replace(/\D/g, "");
+            let soloNumerospartida =  soloNumeros.slice(-20);
             soloNumeros = soloNumeros.slice(-7);
-
             let hoy = new Date();
             let dia = String(hoy.getDate()).padStart(2, "0");
             let mes = String(hoy.getMonth() + 1).padStart(2, "0");
@@ -144,7 +144,8 @@ router.get(
               Cantidad_Ingresada: parseFloat(det.peso),
               Precio_Unitario: valorEnPesos,
               Fecha_de_vencimiento: fechaVenc,
-              partida: item.nroDespacho,
+              partida: soloNumerospartida ,
+              //partida: item.nroDespacho,
               numerodefactasociada: item.nroDespacho,
               tipodedocu: "30",
               //codigo_centrocosto:"0",
