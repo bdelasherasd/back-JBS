@@ -795,7 +795,7 @@ const procesaVentanaDoctos = async (nroDespacho) => {
 
   var res = await ocrSpace(filePath, {
     apiKey: pdfApiKey,
-    ocrUrl: urlOCR1,
+    ocrUrl: urlOCR2,
     language: "spa",
     scale: true,
     isTable: true,
@@ -805,7 +805,7 @@ const procesaVentanaDoctos = async (nroDespacho) => {
 
   var resPL = await ocrSpace(filePath, {
     apiKey: pdfApiKey,
-    ocrUrl: urlOCR1,
+    ocrUrl: urlOCR2,
     language: "spa",
     scale: true,
     isTable: true,
