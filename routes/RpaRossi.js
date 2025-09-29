@@ -1923,6 +1923,16 @@ router.post("/updateDetalles", cors(), async function (req, res) {
     return;
   }
 
+  for (let detalle of detalles) {
+    let codigo = detalle.codigo || "";
+    let sku = await imp_sku.findOne({ where: { codigo: codigo } });
+    if (!sku) {
+      detalle.codigoInvalido = true;
+    } else {
+      detalle.codigoInvalido = false;
+    }
+  }
+
   // Actualizar los detalles en la base de datos
   await imp_importacion_archivo.update(
     { detalles: JSON.stringify(detalles) },
