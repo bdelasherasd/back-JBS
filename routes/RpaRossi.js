@@ -1913,5 +1913,27 @@ router.get(
   }
 );
 
+router.post("/updateDetalles", cors(), async function (req, res) {
+  let { nroDespacho, detalles } = req.body;
+  if (!nroDespacho || !detalles) {
+    res.send({
+      error: true,
+      message: "Faltan parámetros",
+    });
+    return;
+  }
+
+  // Actualizar los detalles en la base de datos
+  await imp_importacion_archivo.update(
+    { detalles: JSON.stringify(detalles) },
+    { where: { nroDespacho: nroDespacho } }
+  );
+
+  res.send({
+    error: false,
+    message: "Detalles actualizados correctamente",
+  });
+});
+
 exports.RpaRossiRoutes = router;
 exports.reprogramaRpaRossi = reprograma;
