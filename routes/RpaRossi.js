@@ -1945,5 +1945,51 @@ router.post("/updateDetalles", cors(), async function (req, res) {
   });
 });
 
+router.get("/listCargados/:fecha", cors(), async function (req, res) {
+  let fecha = req.params.fecha;
+  let sql = "";
+  sql += "SELECT nroDespacho";
+  sql += "      ,nombreArchivo";
+  sql += "      ,createdAt";
+  sql += "      ,updatedAt";
+  sql += "      ,substring(ocrArchivo, 1, 30) as ocrArchivo";
+  sql += "      ,substring(ocrArchivoPL, 1, 30) as ocrArchivoPL";
+  sql += "      ,detalles";
+  sql += "  FROM imp_importacion_archivos";
+  sql += ` where convert(varchar, createdAt, 23) = '${fecha}'`;
+  try {
+    let data = await sequelize.query(sql);
+    data = data[0];
+    if (data.length > 0) {
+      let dataOut = [];
+      for (let item of data) {
+        let detalles = JSON.parse(item.detalles);
+        for (let d of detalles) {
+          let linea = {
+            nroDespacho: item.nroDespacho,
+            nombreArchivo: item.nombreArchivo,
+            createdAt: item.createdAt,
+            ocrArchivo: item.ocrArchivo,
+            ocrArchivoPL: item.ocrArchivoPL,
+            codigo: d.codigo,
+            descripcion: d.descripcion,
+            peso: d.peso,
+            valor: d.valor,
+            codigoInvalido: d.codigoInvalido,
+          };
+          dataOut.push(linea);
+        }
+      }
+      res.send(dataOut);
+    }
+  } catch (error) {
+    console.log(error.message);
+    res.send({
+      error: true,
+      message: "Error en la consulta",
+    });
+  }
+});
+
 exports.RpaRossiRoutes = router;
 exports.reprogramaRpaRossi = reprograma;
