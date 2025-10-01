@@ -1967,15 +1967,12 @@ router.get("/listCargados/:fecha", cors(), async function (req, res) {
         for (let d of detalles) {
           let linea = {
             nroDespacho: item.nroDespacho,
-            nombreArchivo: item.nombreArchivo,
-            createdAt: item.createdAt,
-            ocrArchivo: item.ocrArchivo,
-            ocrArchivoPL: item.ocrArchivoPL,
             codigo: d.codigo,
-            descripcion: d.descripcion,
+            cantidad: d.cantidad,
             peso: d.peso,
             valor: d.valor,
             codigoInvalido: d.codigoInvalido,
+            invoiceNumber: d.invoiceNumber,
           };
           dataOut.push(linea);
         }
