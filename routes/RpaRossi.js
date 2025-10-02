@@ -1978,6 +1978,20 @@ router.get("/listCargados/:fecha", cors(), async function (req, res) {
         }
       }
       res.send(dataOut);
+    } else {
+      let dataOut = [];
+      let linea = {
+        nroDespacho: "",
+        codigo: "",
+        cantidad: "",
+        peso: "",
+        valor: "",
+        codigoInvalido: "",
+        invoiceNumber: "",
+      };
+      dataOut.push(linea);
+
+      res.send(dataOut);
     }
   } catch (error) {
     console.log(error.message);
