@@ -84,6 +84,12 @@ var {
 } = require("./routes/NotificaProceso");
 app.use("/NotificaProceso", NotificaProcesoRoutes);
 
+var {
+  NotificaProveedoresRoutes,
+  reprogramaNotificaProveedores,
+} = require("./routes/NotificaProveedores");
+app.use("/NotificaProveedores", NotificaProveedoresRoutes);
+
 app.use(express.static(path.join(__dirname, "../front/dist")));
 
 app.use("/pdfs", express.static(path.join(__dirname, "./pdf")));
@@ -127,6 +133,9 @@ var procesaTareas = function () {
           }
           if (e.aplicacion === "NotificaProceso") {
             reprogramaNotificaProceso(JSON.parse(e.taskdata), e.idTask);
+          }
+          if (e.aplicacion === "NotificaProveedores") {
+            reprogramaNotificaProveedores(JSON.parse(e.taskdata), e.idTask);
           }
         });
         resolve(data);
