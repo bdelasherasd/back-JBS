@@ -201,9 +201,7 @@ router.get(
         // Calcular porcentajeCargaFactura
         dataOut = dataOut.map((item) => ({
           ...item,
-          porcentajeCargaFactura: parseFloat(
-            (item.kilos / item.totPeso).toFixed(2)
-          ),
+          porcentajeCargaFactura: parseFloat(item.kilos / item.totPeso),
         }));
 
         const templatePath = path.join("views", "FormatoArchivoStock.xlsx");

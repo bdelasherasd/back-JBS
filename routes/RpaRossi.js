@@ -1957,6 +1957,7 @@ router.get("/listCargados/:fecha", cors(), async function (req, res) {
   sql += "      ,detalles";
   sql += "  FROM imp_importacion_archivos";
   sql += ` where convert(varchar, createdAt, 23) = '${fecha}'`;
+  sql += "   and isnull(detalles, '') <> ''";
   try {
     let data = await sequelize.query(sql);
     data = data[0];
