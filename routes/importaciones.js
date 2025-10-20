@@ -6,6 +6,7 @@ var task = require("../models/task");
 var sequelize = require("../models/sequelizeConnection");
 var dolarobs = require("../models/dolarobs");
 var imp_importacion = require("../models/imp_importacion");
+var imp_sku = require("../models/imp_sku");
 var imp_importacion_archivo = require("../models/imp_importacion_archivo");
 const showLog = require("../middleware/showLog");
 const imp_gastos_aduana = require("../models/imp_gastos_aduana");
@@ -644,6 +645,33 @@ router.get("/agregaInvoiceNumber", cors(), async function (req, res) {
       error: false,
       message: "Invoice numbers updated successfully.",
     });
+  } catch (error) {
+    console.log(error.message);
+  }
+});
+
+router.get("/validaCodigo/:codigo", cors(), async function (req, res) {
+  showLog(req, res);
+  let codigo = req.params.codigo;
+
+  try {
+    let result = await imp_sku.findOne({
+      where: {
+        sku: codigo,
+      },
+    });
+
+    if (result) {
+      res.send({
+        error: false,
+        message: "Código válido.",
+      });
+    } else {
+      res.send({
+        error: true,
+        message: "Código no encontrado.",
+      });
+    }
   } catch (error) {
     console.log(error.message);
   }
