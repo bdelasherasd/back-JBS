@@ -757,10 +757,11 @@ const procesaVentanaDoctos = async (nroDespacho) => {
 
   //  var Archivos = [];
   let indiceArchivo = 0;
-  for ([indice, e] of tablaArchivos.entries()) {
-    var sublineaHTML = await e.getAttribute("innerHTML");
-    var dom = parseFromString(sublineaHTML);
-    var columnas = dom.getElementsByTagName("td");
+  for (let i = tablaArchivos.length - 1; i >= 0; i--) {
+    const e = tablaArchivos[i];
+    const sublineaHTML = await e.getAttribute("innerHTML");
+    const dom = parseFromString(sublineaHTML);
+    const columnas = dom.getElementsByTagName("td");
 
     if (
       columnas[0].textContent.trim().toUpperCase().includes("NO POSEE ARCHIVOS")
@@ -770,7 +771,7 @@ const procesaVentanaDoctos = async (nroDespacho) => {
     }
 
     if (columnas[0].textContent.trim().toUpperCase().includes("FULL")) {
-      indiceArchivo = indice + 1;
+      indiceArchivo = i + 1;
       break;
     }
   }
