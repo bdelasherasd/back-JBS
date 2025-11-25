@@ -44,8 +44,9 @@ router.post(
   async function (req, res) {
     showLog(req, res);
     try {
-      await processExcel(req.file.path, "CIERRES RODOVIARIOS");
-      await processExcel(req.file.path, "MARITIMO");
+        await processExcel(req.file.path, "PROGRAMACIÓN");
+      //await processExcel(req.file.path, "CIERRES RODOVIARIOS");
+      //await processExcel(req.file.path, "MARITIMO");
       res
         .status(200)
         .send({ message: "Archivo procesado correctamente", ok: true });
@@ -78,12 +79,14 @@ async function processExcel(filePath, sheetName) {
 
     let erroresEncabezado = "";
     if (rowCount === 1) {
-      if (sheetName === "CIERRES RODOVIARIOS") {
-        erroresEncabezado = await validaEncabezadosRodoviarios(row);
+      
+        if (sheetName === "PROGRAMACIÓN") {
+      //if (sheetName === "CIERRES RODOVIARIOS") {
+        erroresEncabezado = await validaEncabezadosPROGRAMACIÓN(row);
       }
-      if (sheetName === "MARITIMO") {
-        erroresEncabezado = await validaEncabezadosMaritimos(row);
-      }
+       // if (sheetName === "MARITIMO") {
+       // erroresEncabezado = await validaEncabezadosMaritimos(row);
+       //}
       if (erroresEncabezado !== "") {
         console.error("Error en los encabezados:", erroresEncabezado);
         throw new Error(`Error en los encabezados: ${erroresEncabezado}`);
@@ -105,11 +108,11 @@ async function processExcel(filePath, sheetName) {
     if (facturaString.trim() !== "") {
       let peso = "";
 
-      if (sheetName === "CIERRES RODOVIARIOS") {
-        peso = row["Peso Liq. Cargado"].toString().trim();
-      }
+      //if (sheetName === "CIERRES RODOVIARIOS") {
+      //  peso = row["Peso Liq. Cargado"].toString().trim();
+      //}
 
-      if (sheetName === "MARITIMO") {
+      if (sheetName === "PROGRAMACIÓN") {
         peso = row["Peso Planeado"].toString().trim();
       }
       try {
@@ -175,46 +178,48 @@ async function eliminaExistentes(jsonData) {
   }
 }
 
-async function validaEncabezadosRodoviarios(row) {
+async function validaEncabezadosPROGRAMACIÓN(row) {
   let errores = [];
-  if (!row.Factura) {
+  if (!row.FACTURA) {
     errores.push("Falta el encabezado Factura");
   }
-  if (!row.Sigla) {
+  if (!row.SIGLA) {
     errores.push("Falta el encabezado Sigla");
   }
-  if (!row.Precio) {
-    errores.push("Falta el encabezado Precio");
-  }
-  if (!row["Peso Liq. Cargado"]) {
-    errores.push("Falta el encabezado Peso Liq. Cargado");
-  }
-  if (!row.Cajas) {
-    errores.push("Falta el encabezado Cajas");
-  }
-
-  return errores.join(", ");
-}
-
-async function validaEncabezadosMaritimos(row) {
-  let errores = [];
-  if (!row.Factura) {
-    errores.push("Falta el encabezado Factura");
-  }
-  if (!row.Sigla) {
-    errores.push("Falta el encabezado Sigla");
-  }
-  if (!row.Precio) {
+  if (!row.PRECIO) {
     errores.push("Falta el encabezado Precio");
   }
   if (!row["Peso Planeado"]) {
-    errores.push("Falta el encabezado Peso Planeado");
+  errores.push("Falta el encabezado Peso Planeado");
+  //if (!row["Peso Liq. Cargado"]) {
+  //  errores.push("Falta el encabezado Peso Liq. Cargado");
   }
-  if (!row.Cajas) {
+  if (!row.CAJAS) {
     errores.push("Falta el encabezado Cajas");
   }
 
   return errores.join(", ");
 }
+
+//async function validaEncabezadosMaritimos(row) {
+//  let errores = [];
+//  if (!row.Factura) {
+//    errores.push("Falta el encabezado Factura");
+//  }
+//  if (!row.Sigla) {
+//    errores.push("Falta el encabezado Sigla");
+//  }
+//  if (!row.Precio) {
+//    errores.push("Falta el encabezado Precio");
+//  }
+//  if (!row["Peso Planeado"]) {
+//    errores.push("Falta el encabezado Peso Planeado");
+//  }
+//  if (!row.Cajas) {
+//    errores.push("Falta el encabezado Cajas");
+//  }
+
+//  return errores.join(", ");
+//}
 
 module.exports = router;
