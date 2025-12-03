@@ -113,32 +113,19 @@ async function processExcel(filePath, sheetName) {
       //}
 
       if (sheetName === "PROGRAMACIÓN") {
-        proveedor  = "SEARA";
-        peso       = row["Peso Planeado"].toString().trim();
-        factura    = row["FACTURA"].toString().trim();
-        sku        = row["SIGLA"].toString().trim();
-        cantidad   = row["CAJAS"].toString().trim();
-        precio     = row["PRECIO"].toString().trim();
-
+        peso = row["Peso Planeado"].toString().trim();
       }
       try {
-        const cargaData = 
-        {
-          proveedor: proveedor,
-          factura: factura,
-          sku: sku,
-          cantidad: cantidad,
+        const cargaData = {
+          proveedor: "SEARA",
+          factura: facturaString,
+          sku: row.Sigla,
+          cantidad: row.Cajas,
           peso: peso,
-          precio: toFixedExact((parseFloat(precio) * parseFloat(peso)) / 1000,2 ),
-          
-                  
-                   
-          //proveedor: "SEARA",
-          //factura: facturaString,
-          //sku: row.Sigla,
-          //cantidad: row.Cajas,
-          //peso: peso,
-          //precio: toFixedExact((parseFloat(row.Precio) * parseFloat(peso)) / 1000,2 ),
+          precio: toFixedExact(
+            (parseFloat(row.Precio) * parseFloat(peso)) / 1000,
+            2
+          ),
         };
         //console.log("Guardando carga:", cargaData);
         // const existe = await imp_carga.findOne({
