@@ -115,6 +115,9 @@ async function processExcel(filePath, sheetName) {
       if (sheetName === "PROGRAMACIÓN") {
         proveedor  = "SEARA";
         peso       = row["Peso Planeado"].toString().trim();
+        let pesoStr = String(row["Peso Planeado"] ?? "").trim();
+            pesoStr = pesoStr.replace(/\./g, "").replace(/,/g, "."); // quita miles, pone . como decimal
+        peso = parseFloat(pesoStr) || 0;
         factura    = row["FACTURA"].toString().trim();
         sku        = row["SIGLA"].toString().trim();
         cantidad   = row["CAJAS"].toString().trim();
