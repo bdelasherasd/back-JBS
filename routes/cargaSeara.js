@@ -44,7 +44,7 @@ router.post(
   async function (req, res) {
     showLog(req, res);
     try {
-        await processExcel(req.file.path, "PROGRAMACIÓN");
+      await processExcel(req.file.path, "PROGRAMACIÓN");
       //await processExcel(req.file.path, "CIERRES RODOVIARIOS");
       //await processExcel(req.file.path, "MARITIMO");
       res
@@ -53,7 +53,7 @@ router.post(
     } catch (error) {
       res.status(500).send({ error: error.message, ok: false });
     }
-  }
+  },
 );
 
 async function processExcel(filePath, sheetName) {
@@ -79,14 +79,13 @@ async function processExcel(filePath, sheetName) {
 
     let erroresEncabezado = "";
     if (rowCount === 1) {
-      
-        if (sheetName === "PROGRAMACIÓN") {
-      //if (sheetName === "CIERRES RODOVIARIOS") {
+      if (sheetName === "PROGRAMACIÓN") {
+        //if (sheetName === "CIERRES RODOVIARIOS") {
         erroresEncabezado = await validaEncabezadosPROGRAMACIÓN(row);
       }
-       // if (sheetName === "MARITIMO") {
-       // erroresEncabezado = await validaEncabezadosMaritimos(row);
-       //}
+      // if (sheetName === "MARITIMO") {
+      // erroresEncabezado = await validaEncabezadosMaritimos(row);
+      //}
       if (erroresEncabezado !== "") {
         console.error("Error en los encabezados:", erroresEncabezado);
         throw new Error(`Error en los encabezados: ${erroresEncabezado}`);
@@ -113,29 +112,28 @@ async function processExcel(filePath, sheetName) {
       //}
 
       if (sheetName === "PROGRAMACIÓN") {
-        proveedor  = "SEARA";
-        peso       = row["Peso Planeado"].toString().trim();
+        proveedor = "SEARA";
+        peso = row["Peso Planeado"].toString().trim();
         let pesoStr = String(row["Peso Planeado"] ?? "").trim();
-            pesoStr = pesoStr.replace(/\./g, "").replace(/,/g, "."); // quita miles, pone . como decimal
+        pesoStr = pesoStr.replace(/\./g, "").replace(/,/g, "."); // quita miles, pone . como decimal
         peso = parseFloat(pesoStr) || 0;
-        factura    = row["FACTURA"].toString().trim();
-        sku        = row["SIGLA"].toString().trim();
-        cantidad   = row["CAJAS"].toString().trim();
-        precio     = row["PRECIO"].toString().trim();
-
+        factura = row["FACTURA"].toString().trim();
+        sku = row["SIGLA"].toString().trim();
+        cantidad = row["CAJAS"].toString().trim();
+        precio = row["PRECIO"].toString().trim();
       }
       try {
-        const cargaData = 
-        {
+        const cargaData = {
           proveedor: proveedor,
           factura: factura,
           sku: sku,
           cantidad: cantidad,
           peso: peso,
-          precio: toFixedExact((parseFloat(precio) * parseFloat(peso)) / 1000,2 ),
-          
-                  
-                   
+          precio: toFixedExact(
+            (parseFloat(precio) * parseFloat(peso)) / 1000,
+            2,
+          ),
+
           //proveedor: "SEARA",
           //factura: facturaString,
           //sku: row.Sigla,
@@ -166,21 +164,21 @@ function toFixedExact(num, decimals) {
   const factor = Math.pow(10, decimals);
   // Se suma un pequeño epsilon para contrarrestar errores binarios
   return (Math.round((num + Number.EPSILON) * factor) / factor).toFixed(
-    decimals
+    decimals,
   );
 }
 
 async function eliminaExistentes(jsonData) {
   for (const [index, row] of jsonData.entries()) {
-    if (row.Factura) {
-      //console.log(index, row.Factura, typeof row.Factura);
+    if (row.FACTURA) {
+      //console.log(index, row.FACTURA, typeof row.FACTURA);
 
       let facturaString = "";
 
-      if (typeof row.Factura !== "string") {
-        facturaString = String(row.Factura);
+      if (typeof row.FACTURA !== "string") {
+        facturaString = String(row.FACTURA);
       } else {
-        facturaString = row.Factura;
+        facturaString = row.FACTURA;
       }
 
       if (facturaString.trim() !== "") {
@@ -206,9 +204,9 @@ async function validaEncabezadosPROGRAMACIÓN(row) {
     errores.push("Falta el encabezado Precio");
   }
   if (!row["Peso Planeado"]) {
-  errores.push("Falta el encabezado Peso Planeado");
-  //if (!row["Peso Liq. Cargado"]) {
-  //  errores.push("Falta el encabezado Peso Liq. Cargado");
+    errores.push("Falta el encabezado Peso Planeado");
+    //if (!row["Peso Liq. Cargado"]) {
+    //  errores.push("Falta el encabezado Peso Liq. Cargado");
   }
   if (!row.CAJAS) {
     errores.push("Falta el encabezado Cajas");
