@@ -81,19 +81,19 @@ router.post("/agenda", cors(), async function (req, res) {
           ":" +
           taskdata.minuto +
           "/" +
-          taskdata.dia
+          taskdata.dia,
       );
       const fechaInicial = new Date();
       fechaInicial.setDate(fechaInicial.getDate() - dias_rpa);
       const fecha = fechaInicial.toISOString().split("T")[0];
-      (taskdata["referencia"] = "lote"), (taskdata["fechaDesde"] = fecha);
+      ((taskdata["referencia"] = "lote"), (taskdata["fechaDesde"] = fecha));
       console.log("Fecha Desde", fecha);
       await procesaAgenda(req, res, taskdata);
     },
     {
       scheduled: true,
       timezone: timeZone,
-    }
+    },
   );
   var item = {
     aplicacion: "RpaRossi",
@@ -175,19 +175,19 @@ var reprograma = function (taskdata, idTask) {
           ":" +
           taskdata.minuto +
           " / " +
-          taskdata.dia
+          taskdata.dia,
       );
       const fechaInicial = new Date();
       fechaInicial.setDate(fechaInicial.getDate() - 30);
       const fecha = fechaInicial.toISOString().split("T")[0];
       console.log("Fecha Desde", fecha);
-      (taskdata["referencia"] = "lote"), (taskdata["fechaDesde"] = fecha);
+      ((taskdata["referencia"] = "lote"), (taskdata["fechaDesde"] = fecha));
       procesaAgenda(null, null, taskdata);
     },
     {
       scheduled: true,
       timezone: timeZone,
-    }
+    },
   );
   global.tjobs.push({ id: idTask, job: job });
 };
@@ -248,19 +248,19 @@ const procesaAgenda = async (req, res, taskdata) => {
 
   var rut = await driver.wait(
     until.elementLocated(By.xpath('//*[@id="username"]')),
-    20000
+    20000,
   );
   await rut.sendKeys("19686132-7" + Key.TAB);
 
   var pwd = await driver.wait(
     until.elementLocated(By.xpath('//*[@id="password"]')),
-    20000
+    20000,
   );
   await pwd.sendKeys("AdminQa2025$$##" + Key.TAB);
 
   var btn = await driver.wait(
     until.elementLocated(By.xpath('//*[@id="form"]/fieldset/button')),
-    20000
+    20000,
   );
 
   await btn.click();
@@ -306,6 +306,8 @@ const saveCsv = async (item) => {
 };
 
 const recuperaCsv = async (nroDespacho) => {
+  await driver.sleep(10000);
+
   var btn = await getObjeto('//*[@id="tabla_wrapper"]/div[1]/div[2]/button/i');
   await btn.click();
 
@@ -370,7 +372,7 @@ const procesaDetallesLote = async (fechaDesde) => {
       let fecha = ano + "-" + mes + "-" + dia;
       if (fecha >= fechaDesde) {
         let existe = despachosConFactura.find(
-          (d) => d.nroDespacho == e.despacho
+          (d) => d.nroDespacho == e.despacho,
         );
         if (existe) {
           console.log("Ya existe el despacho", e.despacho);
@@ -463,7 +465,7 @@ const getObjeto = async (xpath) => {
     try {
       var e = await driver.wait(
         until.elementLocated(By.xpath(xpath)),
-        randomNumber
+        randomNumber,
       );
       return e;
     } catch (e) {
@@ -494,9 +496,9 @@ const procesaDetalles = async (nroDespacho) => {
     } catch (e) {
       numref = await driver.wait(
         until.elementLocated(
-          By.xpath('//*[@id="exportar"]/fieldset/div[1]/input')
+          By.xpath('//*[@id="exportar"]/fieldset/div[1]/input'),
         ),
-        20000
+        20000,
       );
     }
   }
@@ -509,9 +511,9 @@ const procesaDetalles = async (nroDespacho) => {
     try {
       var btn = await driver.wait(
         until.elementLocated(
-          By.xpath('//*[@id="exportar"]/fieldset/div[18]/button')
+          By.xpath('//*[@id="exportar"]/fieldset/div[18]/button'),
         ),
-        20000
+        20000,
       );
       await btn.click();
       break;
@@ -527,7 +529,7 @@ const procesaDetalles = async (nroDespacho) => {
     try {
       var subtabla = await driver.wait(
         until.elementsLocated(By.xpath('//*[@id="tabla"]')),
-        20000
+        20000,
       );
       break;
     } catch (e) {
@@ -608,20 +610,20 @@ const procesaDetalles = async (nroDespacho) => {
       btn = await driver.wait(
         until.elementLocated(
           By.xpath(
-            "/html/body/div[1]/div[2]/div/div/div/div/div[2]/div/div/div/div/table/tbody/tr/td[9]/div/button"
-          )
+            "/html/body/div[1]/div[2]/div/div/div/div/div[2]/div/div/div/div/table/tbody/tr/td[9]/div/button",
+          ),
         ),
-        20000
+        20000,
       );
     } else {
       var linea = sublinea + 1;
       btn = await driver.wait(
         until.elementLocated(
           By.xpath(
-            `/html/body/div[1]/div[2]/div/div/div/div/div[2]/div/div/div/div/table/tbody/tr/td[${linea}]/div/button`
-          )
+            `/html/body/div[1]/div[2]/div/div/div/div/div[2]/div/div/div/div/table/tbody/tr/td[${linea}]/div/button`,
+          ),
         ),
-        20000
+        20000,
       );
     }
     await btn.click();
@@ -640,7 +642,7 @@ const procesaDetalles = async (nroDespacho) => {
     await procesaVentanaDoctos(item.nroDespacho);
 
     let btnCerrarModal = await getObjeto(
-      '//*[@id="main-modal"]/div/div/div[3]/button'
+      '//*[@id="main-modal"]/div/div/div[3]/button',
     );
     await btnCerrarModal.click();
 
@@ -676,7 +678,7 @@ const procesaVentanaCarga = async (nroDespacho) => {
     try {
       tabCarga = await driver.wait(
         until.elementLocated(By.xpath('//*[@id="myTab"]/li[3]/a/span')),
-        20000
+        20000,
       );
       await tabCarga.click();
       break;
@@ -701,7 +703,7 @@ const procesaVentanaCarga = async (nroDespacho) => {
       }
       console.log("Esperando grupoDetalle");
       grupoDetalle = await getObjeto(
-        '//*[@id="main-modal"]/div/div/div[2]/div/div/div/div'
+        '//*[@id="main-modal"]/div/div/div[2]/div/div/div/div',
       );
       await driver.sleep(1000);
     }
@@ -720,7 +722,7 @@ const procesaVentanaCarga = async (nroDespacho) => {
   console.log("Fecha ETA", fechaETA);
   await imp_importacion.update(
     { fechaETA: fechaETA },
-    { where: { nroDespacho: nroDespacho } }
+    { where: { nroDespacho: nroDespacho } },
   );
 };
 
@@ -738,7 +740,7 @@ const procesaVentanaDoctos = async (nroDespacho) => {
     try {
       tabDoctos = await driver.wait(
         until.elementLocated(By.xpath('//*[@id="myTab"]/li[6]/a/span')),
-        20000
+        20000,
       );
       await tabDoctos.click();
       break;
@@ -750,9 +752,9 @@ const procesaVentanaDoctos = async (nroDespacho) => {
 
   var tablaArchivos = await driver.wait(
     until.elementsLocated(
-      By.xpath('//*[@id="contenedor-archivos"]/div/div/table/tbody/tr')
+      By.xpath('//*[@id="contenedor-archivos"]/div/div/table/tbody/tr'),
     ),
-    20000
+    20000,
   );
 
   //  var Archivos = [];
@@ -783,10 +785,10 @@ const procesaVentanaDoctos = async (nroDespacho) => {
   var nombreArchivo = await driver.wait(
     until.elementLocated(
       By.xpath(
-        `//*[@id="contenedor-archivos"]/div/div/table/tbody/tr[${indiceArchivo}]/td[2]`
-      )
+        `//*[@id="contenedor-archivos"]/div/div/table/tbody/tr[${indiceArchivo}]/td[2]`,
+      ),
     ),
-    20000
+    20000,
   );
 
   await nombreArchivo.click();
@@ -844,7 +846,7 @@ const dataCsv = async (nroDespacho) => {
       {
         tipoTranporte: tipoTransporte,
       },
-      { where: { nroDespacho: nroDespacho } }
+      { where: { nroDespacho: nroDespacho } },
     );
   }
 };
@@ -865,7 +867,7 @@ const saveArchivos = async (item) => {
         await procesaOcrSeara(
           JSON.parse(item.ocrArchivo),
           JSON.parse(item.ocrArchivoPL),
-          item.nroDespacho
+          item.nroDespacho,
         );
       } else if (dataImportacion.proveedor.toUpperCase().includes("JBS")) {
         await procesaOcrJBS(JSON.parse(item.ocrArchivo), item.nroDespacho);
@@ -873,13 +875,13 @@ const saveArchivos = async (item) => {
         await procesaOcrSWIFT(
           JSON.parse(item.ocrArchivo),
           JSON.parse(item.ocrArchivoPL),
-          item.nroDespacho
+          item.nroDespacho,
         );
       } else if (dataImportacion.proveedor.toUpperCase().includes("PILGRIMS")) {
         await procesaOcrPILGRIMS(
           JSON.parse(item.ocrArchivo),
           JSON.parse(item.ocrArchivoPL),
-          item.nroDespacho
+          item.nroDespacho,
         );
       } else if (
         dataImportacion.proveedor.toUpperCase().includes("MANTIQUEIRA")
@@ -887,25 +889,25 @@ const saveArchivos = async (item) => {
         await procesaOcrMANTIQUEIRA(
           JSON.parse(item.ocrArchivo),
           JSON.parse(item.ocrArchivoPL),
-          item.nroDespacho
+          item.nroDespacho,
         );
       } else if (dataImportacion.proveedor.toUpperCase().includes("VICTORIA")) {
         await procesaOcrVICTORIA(
           JSON.parse(item.ocrArchivo),
           JSON.parse(item.ocrArchivoPL),
-          item.nroDespacho
+          item.nroDespacho,
         );
       } else if (dataImportacion.proveedor.toUpperCase().includes("BOSTON")) {
         await procesaOcrBOSTON(
           JSON.parse(item.ocrArchivo),
           JSON.parse(item.ocrArchivoPL),
-          item.nroDespacho
+          item.nroDespacho,
         );
       } else if (dataImportacion.proveedor.toUpperCase().includes("MEAT")) {
         await procesaOcrMEAT(
           JSON.parse(item.ocrArchivo),
           JSON.parse(item.ocrArchivoPL),
-          item.nroDespacho
+          item.nroDespacho,
         );
       }
       console.log("Guardando Archivos", item.nombreArchivo);
@@ -1042,12 +1044,12 @@ const procesaVentanaGastos = async (nroDespacho) => {
 
     var objUyD = null;
     const elements = await driver.findElements(
-      By.xpath('//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a')
+      By.xpath('//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a'),
     );
     if (elements.length > 0) {
       console.log("get objeto UYD");
       objUyD = await getObjeto(
-        '//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a'
+        '//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a',
       );
       await driver.sleep(2000);
     }
@@ -1056,27 +1058,27 @@ const procesaVentanaGastos = async (nroDespacho) => {
       console.log("procesa objeto UYD");
 
       const modalElement = await driver.findElement(
-        By.xpath('//*[@id="main-modal"]/div/div/div[2]')
+        By.xpath('//*[@id="main-modal"]/div/div/div[2]'),
       );
       const tablatarget = await modalElement.findElements(
-        By.xpath('//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a')
+        By.xpath('//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a'),
       );
       if (tablatarget.length > 0) {
         const targetElement = await modalElement.findElement(
-          By.xpath('//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a')
+          By.xpath('//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a'),
         );
         await driver.sleep(2000);
         await driver.executeScript(
           "arguments[0].scrollIntoView({ block: 'center' });",
-          targetElement
+          targetElement,
         );
         await driver.executeScript(
           "arguments[0].scrollIntoView({ block: 'center' });",
-          targetElement
+          targetElement,
         );
         await driver.executeScript(
           "arguments[0].scrollIntoView({ block: 'center' });",
-          targetElement
+          targetElement,
         );
         await driver.sleep(2000);
         console.log("procesa objeto UYD click");
@@ -1092,7 +1094,7 @@ const procesaVentanaGastos = async (nroDespacho) => {
     try {
       tabGastos = await driver.wait(
         until.elementLocated(By.xpath('//*[@id="myTab"]/li[2]/a/span')),
-        20000
+        20000,
       );
       await tabGastos.click();
       break;
@@ -1112,9 +1114,9 @@ const procesaVentanaGastos = async (nroDespacho) => {
     var noFacturado = await driver
       .wait(
         until.elementLocated(
-          By.xpath('//*[@id="contenedor-costo"]/div/div/p[2]')
+          By.xpath('//*[@id="contenedor-costo"]/div/div/p[2]'),
         ),
-        randomNumber
+        randomNumber,
       )
       .getText();
   } catch (error) {
@@ -1157,10 +1159,10 @@ const procesaVentanaGastos = async (nroDespacho) => {
       .wait(
         until.elementLocated(
           By.xpath(
-            '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[1]/div[1]/p/span'
-          )
+            '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[1]/div[1]/p/span',
+          ),
         ),
-        4000
+        4000,
       )
       .getText();
   } catch (error) {
@@ -1170,20 +1172,20 @@ const procesaVentanaGastos = async (nroDespacho) => {
     .wait(
       until.elementLocated(
         By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[1]/div[2]/p/span'
-        )
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[1]/div[2]/p/span',
+        ),
       ),
-      20000
+      20000,
     )
     .getText();
   var nave = await driver
     .wait(
       until.elementLocated(
         By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[1]/div[3]/p/span'
-        )
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[1]/div[3]/p/span',
+        ),
       ),
-      20000
+      20000,
     )
     .getText();
 
@@ -1191,10 +1193,10 @@ const procesaVentanaGastos = async (nroDespacho) => {
     .wait(
       until.elementLocated(
         By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[2]/div[1]/p/span'
-        )
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[2]/div[1]/p/span',
+        ),
       ),
-      20000
+      20000,
     )
     .getText();
 
@@ -1202,9 +1204,9 @@ const procesaVentanaGastos = async (nroDespacho) => {
     .wait(
       until.elementLocated(
         By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[2]/div[2]/p/span'
-        )
-      )
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[2]/div[2]/p/span',
+        ),
+      ),
     )
     .getText();
 
@@ -1212,9 +1214,9 @@ const procesaVentanaGastos = async (nroDespacho) => {
     .wait(
       until.elementLocated(
         By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[3]/div[1]/p/span'
-        )
-      )
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[3]/div[1]/p/span',
+        ),
+      ),
     )
     .getText();
 
@@ -1222,9 +1224,9 @@ const procesaVentanaGastos = async (nroDespacho) => {
     .wait(
       until.elementLocated(
         By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[3]/div[2]/p/span[1]'
-        )
-      )
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[3]/div[2]/p/span[1]',
+        ),
+      ),
     )
     .getText();
 
@@ -1232,9 +1234,9 @@ const procesaVentanaGastos = async (nroDespacho) => {
     .wait(
       until.elementLocated(
         By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[3]/div[2]/p/span[2]'
-        )
-      )
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[3]/div[2]/p/span[2]',
+        ),
+      ),
     )
     .getText();
 
@@ -1242,9 +1244,9 @@ const procesaVentanaGastos = async (nroDespacho) => {
     .wait(
       until.elementLocated(
         By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[4]/div[1]/p/span[1]'
-        )
-      )
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[4]/div[1]/p/span[1]',
+        ),
+      ),
     )
     .getText();
 
@@ -1252,9 +1254,9 @@ const procesaVentanaGastos = async (nroDespacho) => {
     .wait(
       until.elementLocated(
         By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[4]/div[1]/p/span[2]'
-        )
-      )
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[4]/div[1]/p/span[2]',
+        ),
+      ),
     )
     .getText();
 
@@ -1262,9 +1264,9 @@ const procesaVentanaGastos = async (nroDespacho) => {
     .wait(
       until.elementLocated(
         By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[4]/div[2]/p/span[1]'
-        )
-      )
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[4]/div[2]/p/span[1]',
+        ),
+      ),
     )
     .getText();
 
@@ -1272,9 +1274,9 @@ const procesaVentanaGastos = async (nroDespacho) => {
     .wait(
       until.elementLocated(
         By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[4]/div[2]/p/span[2]'
-        )
-      )
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[4]/div[2]/p/span[2]',
+        ),
+      ),
     )
     .getText();
 
@@ -1282,9 +1284,9 @@ const procesaVentanaGastos = async (nroDespacho) => {
     .wait(
       until.elementLocated(
         By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[4]/div[3]/p/span[1]'
-        )
-      )
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[4]/div[3]/p/span[1]',
+        ),
+      ),
     )
     .getText();
 
@@ -1292,17 +1294,17 @@ const procesaVentanaGastos = async (nroDespacho) => {
     .wait(
       until.elementLocated(
         By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[4]/div[3]/p/span[2]'
-        )
-      )
+          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[4]/div[3]/p/span[2]',
+        ),
+      ),
     )
     .getText();
 
   var tablaGastosAgencia = await driver.wait(
     until.elementsLocated(
-      By.xpath('//*[@id="contenedor-costo"]/div/div/div[2]/div/div')
+      By.xpath('//*[@id="contenedor-costo"]/div/div/div[2]/div/div'),
     ),
-    20000
+    20000,
   );
 
   var gastosAgencia = [];
@@ -1348,16 +1350,16 @@ const procesaVentanaGastos = async (nroDespacho) => {
   var desembolsos = [];
 
   var excelDesembolsos = await getObjeto(
-    '//*[@id="contenedor-gastos"]/div[1]/div[2]/a[1]'
+    '//*[@id="contenedor-gastos"]/div[1]/div[2]/a[1]',
   );
   if (excelDesembolsos) {
     const elementVisible = await driver.wait(
       until.elementIsVisible(excelDesembolsos),
-      5000
+      5000,
     );
     const elementClickable = await driver.wait(
       until.elementIsEnabled(excelDesembolsos),
-      5000
+      5000,
     );
 
     await excelDesembolsos.click();
@@ -1738,7 +1740,7 @@ router.get("/reprocesaFaltantes", cors(), async function (req, res) {
       await procesaOcrSeara(
         JSON.parse(item.ocrArchivo),
         JSON.parse(item.ocrArchivoPL),
-        item.nroDespacho
+        item.nroDespacho,
       );
     } else if (item.proveedor.toUpperCase().includes("JBS")) {
       await procesaOcrJBS(JSON.parse(item.ocrArchivo), item.nroDespacho);
@@ -1746,37 +1748,37 @@ router.get("/reprocesaFaltantes", cors(), async function (req, res) {
       await procesaOcrSWIFT(
         JSON.parse(item.ocrArchivo),
         JSON.parse(item.ocrArchivoPL),
-        item.nroDespacho
+        item.nroDespacho,
       );
     } else if (item.proveedor.toUpperCase().includes("PILGRIMS")) {
       await procesaOcrPILGRIMS(
         JSON.parse(item.ocrArchivo),
         JSON.parse(item.ocrArchivoPL),
-        item.nroDespacho
+        item.nroDespacho,
       );
     } else if (item.proveedor.toUpperCase().includes("MANTIQUEIRA")) {
       await procesaOcrMANTIQUEIRA(
         JSON.parse(item.ocrArchivo),
         JSON.parse(item.ocrArchivoPL),
-        item.nroDespacho
+        item.nroDespacho,
       );
     } else if (item.proveedor.toUpperCase().includes("VICTORIA")) {
       await procesaOcrVICTORIA(
         JSON.parse(item.ocrArchivo),
         JSON.parse(item.ocrArchivoPL),
-        item.nroDespacho
+        item.nroDespacho,
       );
     } else if (item.proveedor.toUpperCase().includes("BOSTON")) {
       await procesaOcrBOSTON(
         JSON.parse(item.ocrArchivo),
         JSON.parse(item.ocrArchivoPL),
-        item.nroDespacho
+        item.nroDespacho,
       );
     } else if (item.proveedor.toUpperCase().includes("MEAT")) {
       await procesaOcrMEAT(
         JSON.parse(item.ocrArchivo),
         JSON.parse(item.ocrArchivoPL),
-        item.nroDespacho
+        item.nroDespacho,
       );
     }
   }
@@ -1903,7 +1905,7 @@ router.get(
     // Actualizar los detalles en la base de datos
     await imp_importacion_archivo.update(
       { detalles: JSON.stringify(detalles) },
-      { where: { nroDespacho: nroDespacho } }
+      { where: { nroDespacho: nroDespacho } },
     );
 
     res.send({
@@ -1911,7 +1913,7 @@ router.get(
       message: "Descuento prorrateado correctamente",
       detalles: detalles, // Retorna los detalles actualizados
     });
-  }
+  },
 );
 
 router.post("/updateDetalles", cors(), async function (req, res) {
@@ -1937,7 +1939,7 @@ router.post("/updateDetalles", cors(), async function (req, res) {
   // Actualizar los detalles en la base de datos
   await imp_importacion_archivo.update(
     { detalles: JSON.stringify(detalles) },
-    { where: { nroDespacho: nroDespacho } }
+    { where: { nroDespacho: nroDespacho } },
   );
 
   res.send({
