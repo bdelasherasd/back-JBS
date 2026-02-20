@@ -343,6 +343,8 @@ const recuperaCsv = async (nroDespacho) => {
 };
 
 const procesaDetallesLote = async (fechaDesde) => {
+  await driver.sleep(8000);
+
   var btn = await getObjeto('//*[@id="tabla_wrapper"]/div[1]/div[2]/button/i');
   await btn.click();
 
