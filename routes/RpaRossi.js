@@ -311,7 +311,7 @@ const recuperaCsv = async (nroDespacho) => {
   var btn = await getObjeto('//*[@id="tabla_wrapper"]/div[1]/div[2]/button/i');
   await btn.click();
 
-  await driver.sleep(2000);
+  await driver.sleep(15000);
 
   var fileName = await obtenerCsvMasNuevo(downloadDir);
   var filePath = path.join(downloadDir, fileName);
@@ -343,12 +343,12 @@ const recuperaCsv = async (nroDespacho) => {
 };
 
 const procesaDetallesLote = async (fechaDesde) => {
-  await driver.sleep(8000);
+  await driver.sleep(10000);
 
   var btn = await getObjeto('//*[@id="tabla_wrapper"]/div[1]/div[2]/button/i');
   await btn.click();
 
-  await driver.sleep(2000);
+  await driver.sleep(15000);
 
   var fileName = await obtenerCsvMasNuevo(downloadDir);
   var filePath = path.join(downloadDir, fileName);
@@ -462,7 +462,7 @@ const getDespachoConFactura = async () => {
 const getObjeto = async (xpath) => {
   const randomNumber = Math.floor(Math.random() * (1600 - 1500 + 1)) + 1500;
   var countTryes = 0;
-  var maxTryes = 3;
+  var maxTryes = 10;
   while (countTryes < maxTryes) {
     try {
       var e = await driver.wait(
