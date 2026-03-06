@@ -1047,6 +1047,7 @@ const procesaVentanaGastos = async (nroDespacho) => {
     var objUyD = null;
     const elements = await driver.findElements(
       By.xpath('//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a'),
+      2000,
     );
     if (elements.length > 0) {
       console.log("get objeto UYD");
