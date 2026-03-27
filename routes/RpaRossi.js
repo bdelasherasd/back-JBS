@@ -1049,11 +1049,16 @@ const procesaVentanaGastos = async (nroDespacho) => {
     //   By.xpath('//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a'),
     //   2000,
     // );
-    let links = await driver.findElements(
-      By.xpath("//a[contains(text(),'Descargar UYD')]"),
+
+    const links2 = await driver.findElement(
+      By.xpath(
+        "/html/body/div[4]/div/div/div[2]/div/div/div/div/div[1]/div[2]/div[2]/div",
+      ),
     );
 
-    if (links.length > 0) {
+    let htmlUYD = await links2.getAttribute("innerHTML");
+
+    if (htmlUYD.includes("Descargar UYD")) {
       console.log("get objeto UYD");
       objUyD = await getObjeto(
         '//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a',
