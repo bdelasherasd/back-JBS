@@ -1059,37 +1059,38 @@ const procesaVentanaGastos = async (nroDespacho) => {
     htmlUYD = await links2.getAttribute("innerHTML");
 
     if (htmlUYD.includes("Descargar UYD")) {
-      console.log("get objeto UYD");
-      let objUyD = null;
-      objUyD = await getObjeto(
-        '//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a',
-      );
-      await driver.sleep(1000);
+      try {
+        console.log("get objeto UYD");
+        let objUyD = null;
+        // objUyD = await getObjeto(
+        //   '//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a',
+        // );
+        objUyD = await driver.wait(
+          until.elementLocated(
+            By.xpath(
+              "/html/body/div[4]/div/div/div[2]/div/div/div/div/div[1]/div[2]/div[2]/div/div[3]/div/div/a",
+            ),
+          ),
+          10000,
+        );
 
-      console.log("Center View objeto UYD");
+        await driver.sleep(1000);
 
-      await driver.executeScript(
-        "arguments[0].scrollIntoView({ block: 'center' });",
-        objUyD,
-      );
-      // await driver.executeScript(
-      //   "arguments[0].scrollIntoView({ block: 'center' });",
-      //   objUyD,
-      // );
-      // await driver.executeScript(
-      //   "arguments[0].scrollIntoView({ block: 'center' });",
-      //   objUyD,
-      // );
-      // await driver.executeScript(
-      //   "arguments[0].scrollIntoView({ block: 'center' });",
-      //   objUyD,
-      // );
-      await driver.sleep(2000);
-      console.log("procesa objeto UYD click");
-      await driver.executeScript("arguments[0].click();", objUyD);
-      await driver.sleep(2000);
-      console.log("procesa objeto UYD pdf");
-      fileNameUyD = await obtenerPdfMasNuevo(downloadDir);
+        console.log("Center View objeto UYD");
+
+        await driver.executeScript(
+          "arguments[0].scrollIntoView({ block: 'center' });",
+          objUyD,
+        );
+        await driver.sleep(2000);
+        console.log("procesa objeto UYD click");
+        await driver.executeScript("arguments[0].click();", objUyD);
+        await driver.sleep(2000);
+        console.log("procesa objeto UYD pdf");
+        fileNameUyD = await obtenerPdfMasNuevo(downloadDir);
+      } catch (error) {
+        console.log("Error al obtener objeto UYD", error);
+      }
     }
 
     // if (objUyD) {
