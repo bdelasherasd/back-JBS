@@ -1088,6 +1088,19 @@ const procesaVentanaGastos = async (nroDespacho) => {
         await driver.sleep(2000);
         console.log("procesa objeto UYD pdf");
         fileNameUyD = await obtenerPdfMasNuevo(downloadDir);
+
+        let objAnterior = await driver.wait(
+          until.elementLocated(
+            By.xpath(
+              "/html/body/div[4]/div/div/div[2]/div/div/div/div/div[1]/div[1]",
+            ),
+          ),
+          10000,
+        );
+        await driver.executeScript(
+          "arguments[0].scrollIntoView({ block: 'center' });",
+          objAnterior,
+        );
       } catch (error) {
         console.log("Error al obtener objeto UYD", error);
       }
