@@ -1063,43 +1063,68 @@ const procesaVentanaGastos = async (nroDespacho) => {
       objUyD = await getObjeto(
         '//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a',
       );
+      await driver.sleep(1000);
+
+      console.log("Center View objeto UYD");
+
+      await driver.executeScript(
+        "arguments[0].scrollIntoView({ block: 'center' });",
+        objUyD,
+      );
+      await driver.executeScript(
+        "arguments[0].scrollIntoView({ block: 'center' });",
+        objUyD,
+      );
+      await driver.executeScript(
+        "arguments[0].scrollIntoView({ block: 'center' });",
+        objUyD,
+      );
+      await driver.executeScript(
+        "arguments[0].scrollIntoView({ block: 'center' });",
+        objUyD,
+      );
       await driver.sleep(2000);
+      console.log("procesa objeto UYD click");
+      await driver.executeScript("arguments[0].click();", objUyD);
+      await driver.sleep(2000);
+      console.log("procesa objeto UYD pdf");
+      fileNameUyD = await obtenerPdfMasNuevo(downloadDir);
     }
 
-    if (objUyD) {
-      console.log("procesa objeto UYD");
+    // if (objUyD) {
+    //   console.log("procesa objeto UYD");
 
-      const modalElement = await driver.findElement(
-        By.xpath('//*[@id="main-modal"]/div/div/div[2]'),
-      );
-      const tablatarget = await modalElement.findElements(
-        By.xpath('//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a'),
-      );
-      if (tablatarget.length > 0) {
-        const targetElement = await modalElement.findElement(
-          By.xpath('//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a'),
-        );
-        await driver.sleep(2000);
-        await driver.executeScript(
-          "arguments[0].scrollIntoView({ block: 'center' });",
-          targetElement,
-        );
-        await driver.executeScript(
-          "arguments[0].scrollIntoView({ block: 'center' });",
-          targetElement,
-        );
-        await driver.executeScript(
-          "arguments[0].scrollIntoView({ block: 'center' });",
-          targetElement,
-        );
-        await driver.sleep(2000);
-        console.log("procesa objeto UYD click");
-        await driver.executeScript("arguments[0].click();", targetElement);
-        await driver.sleep(2000);
-        console.log("procesa objeto UYD pdf");
-        fileNameUyD = await obtenerPdfMasNuevo(downloadDir);
-      }
-    }
+    //   const modalElement = await driver.findElement(
+    //     By.xpath('//*[@id="main-modal"]/div/div/div[2]'),
+    //   );
+    //   const tablatarget = await modalElement.findElements(
+    //     By.xpath('//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a'),
+    //   );
+    //   if (tablatarget.length > 0) {
+    //     const targetElement = await modalElement.findElement(
+    //       By.xpath('//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a'),
+    //     );
+    //     await driver.sleep(2000);
+    //     await driver.executeScript(
+    //       "arguments[0].scrollIntoView({ block: 'center' });",
+    //       targetElement,
+    //     );
+    //     await driver.executeScript(
+    //       "arguments[0].scrollIntoView({ block: 'center' });",
+    //       targetElement,
+    //     );
+    //     await driver.executeScript(
+    //       "arguments[0].scrollIntoView({ block: 'center' });",
+    //       targetElement,
+    //     );
+    //     await driver.sleep(2000);
+    //     console.log("procesa objeto UYD click");
+    //     await driver.executeScript("arguments[0].click();", targetElement);
+    //     await driver.sleep(2000);
+    //     console.log("procesa objeto UYD pdf");
+    //     fileNameUyD = await obtenerPdfMasNuevo(downloadDir);
+    //   }
+    // }
   }
 
   while (true) {
