@@ -1041,106 +1041,58 @@ const procesaVentanaGastos = async (nroDespacho) => {
 
   let fileNameUyD = await getFileNameUyd(nroDespacho);
 
-  if (await notieneUyd(nroDespacho)) {
-    console.log("Busca objeto UYD");
+  // if (await notieneUyd(nroDespacho)) {
+  //   console.log("Busca objeto UYD");
 
-    let links2 = null;
-    links2 = await driver.findElement(
-      By.xpath(
-        "/html/body/div[4]/div/div/div[2]/div/div/div/div/div[1]/div[2]/div[2]/div",
-      ),
-    );
-    await driver.executeScript(
-      "arguments[0].scrollIntoView({ block: 'center' });",
-      links2,
-    );
+  //   let links2 = null;
+  //   links2 = await driver.findElement(
+  //     By.xpath(
+  //       "/html/body/div[4]/div/div/div[2]/div/div/div/div/div[1]/div[2]/div[2]/div",
+  //     ),
+  //   );
+  //   await driver.executeScript(
+  //     "arguments[0].scrollIntoView({ block: 'center' });",
+  //     links2,
+  //   );
 
-    let htmlUYD = null;
-    htmlUYD = await links2.getAttribute("innerHTML");
+  //   let htmlUYD = null;
+  //   htmlUYD = await links2.getAttribute("innerHTML");
 
-    if (htmlUYD.includes("Descargar UYD")) {
-      try {
-        console.log("get objeto UYD");
-        let objUyD = null;
-        // objUyD = await getObjeto(
-        //   '//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a',
-        // );
-        objUyD = await driver.wait(
-          until.elementLocated(
-            By.xpath(
-              "/html/body/div[4]/div/div/div[2]/div/div/div/div/div[1]/div[2]/div[2]/div/div[3]/div/div/a",
-            ),
-          ),
-          10000,
-        );
+  //   if (htmlUYD.includes("Descargar UYD")) {
+  //     try {
+  //       console.log("get objeto UYD");
+  //       let objUyD = null;
+  //       // objUyD = await getObjeto(
+  //       //   '//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a',
+  //       // );
+  //       objUyD = await driver.wait(
+  //         until.elementLocated(
+  //           By.xpath(
+  //             "/html/body/div[4]/div/div/div[2]/div/div/div/div/div[1]/div[2]/div[2]/div/div[3]/div/div/a",
+  //           ),
+  //         ),
+  //         10000,
+  //       );
 
-        await driver.sleep(1000);
+  //       await driver.sleep(1000);
 
-        console.log("Center View objeto UYD");
+  //       console.log("Center View objeto UYD");
 
-        await driver.executeScript(
-          "arguments[0].scrollIntoView({ block: 'center' });",
-          objUyD,
-        );
-        await driver.sleep(2000);
-        console.log("procesa objeto UYD click");
-        await driver.executeScript("arguments[0].click();", objUyD);
-        await driver.sleep(2000);
-        console.log("procesa objeto UYD pdf");
-        fileNameUyD = await obtenerPdfMasNuevo(downloadDir);
-
-        let objAnterior = await driver.wait(
-          until.elementLocated(
-            By.xpath(
-              "/html/body/div[4]/div/div/div[2]/div/div/div/div/div[1]/div[1]",
-            ),
-          ),
-          10000,
-        );
-        await driver.executeScript(
-          "arguments[0].scrollIntoView({ block: 'center' });",
-          objAnterior,
-        );
-      } catch (error) {
-        console.log("Error al obtener objeto UYD", error);
-      }
-    }
-
-    // if (objUyD) {
-    //   console.log("procesa objeto UYD");
-
-    //   const modalElement = await driver.findElement(
-    //     By.xpath('//*[@id="main-modal"]/div/div/div[2]'),
-    //   );
-    //   const tablatarget = await modalElement.findElements(
-    //     By.xpath('//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a'),
-    //   );
-    //   if (tablatarget.length > 0) {
-    //     const targetElement = await modalElement.findElement(
-    //       By.xpath('//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a'),
-    //     );
-    //     await driver.sleep(2000);
-    //     await driver.executeScript(
-    //       "arguments[0].scrollIntoView({ block: 'center' });",
-    //       targetElement,
-    //     );
-    //     await driver.executeScript(
-    //       "arguments[0].scrollIntoView({ block: 'center' });",
-    //       targetElement,
-    //     );
-    //     await driver.executeScript(
-    //       "arguments[0].scrollIntoView({ block: 'center' });",
-    //       targetElement,
-    //     );
-    //     await driver.sleep(2000);
-    //     console.log("procesa objeto UYD click");
-    //     await driver.executeScript("arguments[0].click();", targetElement);
-    //     await driver.sleep(2000);
-    //     console.log("procesa objeto UYD pdf");
-    //     fileNameUyD = await obtenerPdfMasNuevo(downloadDir);
-    //   }
-    // }
-  }
+  //       await driver.executeScript(
+  //         "arguments[0].scrollIntoView({ block: 'center' });",
+  //         objUyD,
+  //       );
+  //       await driver.sleep(2000);
+  //       console.log("procesa objeto UYD click");
+  //       await driver.executeScript("arguments[0].click();", objUyD);
+  //       await driver.sleep(2000);
+  //       console.log("procesa objeto UYD pdf");
+  //       fileNameUyD = await obtenerPdfMasNuevo(downloadDir);
+  //     } catch (error) {
+  //       console.log("Error al obtener objeto UYD", error);
+  //     }
+  //   }
+  // }
 
   while (true) {
     try {
