@@ -480,6 +480,65 @@ const getObjeto = async (xpath) => {
   }
 };
 
+const esErrorElementoStale = (error) => {
+  return (
+    error &&
+    (error.name === "StaleElementReferenceError" ||
+      error.message.includes("is stale"))
+  );
+};
+
+const clickObjetoRobusto = async (xpath, descripcion) => {
+  let ultimoError = null;
+  const maxIntentos = 5;
+
+  for (let intento = 1; intento <= maxIntentos; intento++) {
+    try {
+      const elemento = await getObjeto(xpath);
+
+      if (!elemento) {
+        throw new Error("No se encontró " + descripcion);
+      }
+
+      await driver.wait(until.elementIsVisible(elemento), 5000);
+      await driver.wait(until.elementIsEnabled(elemento), 5000);
+      await driver.executeScript(
+        "arguments[0].scrollIntoView({ block: 'center', inline: 'center' });",
+        elemento,
+      );
+      await driver.sleep(500);
+
+      try {
+        await elemento.click();
+      } catch (error) {
+        if (esErrorElementoStale(error)) {
+          throw error;
+        }
+        await driver.executeScript("arguments[0].click();", elemento);
+      }
+
+      return true;
+    } catch (error) {
+      ultimoError = error;
+
+      if (!esErrorElementoStale(error)) {
+        throw error;
+      }
+
+      console.log(
+        "Reintentando click",
+        descripcion,
+        intento,
+        "de",
+        maxIntentos,
+      );
+      await driver.sleep(1000);
+    }
+  }
+
+  throw ultimoError;
+};
+
 const procesaDetalles = async (nroDespacho) => {
   console.log("Inicio Ejecución Programada RPA Rossi", nroDespacho);
 
@@ -1044,48 +1103,22 @@ const procesaVentanaGastos = async (nroDespacho) => {
   if (await notieneUyd(nroDespacho)) {
     console.log("Busca objeto UYD");
 
-    var objUyD = null;
-    // const elements = await driver.findElements(
-    //   By.xpath('//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a'),
-    //   2000,
-    // );
-
-    const links2 = await driver.findElement(
+    let links2 = null;
+    links2 = await driver.findElement(
       By.xpath(
         "/html/body/div[4]/div/div/div[2]/div/div/div/div/div[1]/div[2]/div[2]/div",
       ),
     );
-
-    let htmlUYD = await links2.getAttribute("innerHTML");
+    let htmlUYD = null;
+    htmlUYD = await links2.getAttribute("innerHTML");
 
     if (htmlUYD.includes("Descargar UYD")) {
       console.log("get objeto UYD");
-      objUyD = await getObjeto(
-        '//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a',
-      );
-      await driver.sleep(1000);
-
-      console.log("Center View objeto UYD");
-
-      await driver.executeScript(
-        "arguments[0].scrollIntoView({ block: 'center' });",
-        objUyD,
-      );
-      await driver.executeScript(
-        "arguments[0].scrollIntoView({ block: 'center' });",
-        objUyD,
-      );
-      await driver.executeScript(
-        "arguments[0].scrollIntoView({ block: 'center' });",
-        objUyD,
-      );
-      await driver.executeScript(
-        "arguments[0].scrollIntoView({ block: 'center' });",
-        objUyD,
-      );
-      await driver.sleep(2000);
       console.log("procesa objeto UYD click");
-      await driver.executeScript("arguments[0].click();", objUyD);
+      await clickObjetoRobusto(
+        '//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a',
+        "objeto UYD",
+      );
       await driver.sleep(2000);
       console.log("procesa objeto UYD pdf");
       fileNameUyD = await obtenerPdfMasNuevo(downloadDir);
