@@ -11,7 +11,7 @@ app.use(
     secret: "zp7777",
     resave: false,
     saveUninitialized: false,
-  })
+  }),
 );
 app.use(expressSanitizer());
 app.use(express.json());
@@ -79,6 +79,12 @@ var { RpaRossiRoutes, reprogramaRpaRossi } = require("./routes/RpaRossi");
 app.use("/RpaRossi", RpaRossiRoutes);
 
 var {
+  RpaRossiUydRoutes,
+  reprogramaRpaRossiUyd,
+} = require("./routes/RpaRossiUyd");
+app.use("/RpaRossiUyd", RpaRossiUydRoutes);
+
+var {
   NotificaProcesoRoutes,
   reprogramaNotificaProceso,
 } = require("./routes/NotificaProceso");
@@ -136,6 +142,9 @@ var procesaTareas = function () {
           }
           if (e.aplicacion === "NotificaProveedores") {
             reprogramaNotificaProveedores(JSON.parse(e.taskdata), e.idTask);
+          }
+          if (e.aplicacion === "RpaRossiUyd") {
+            reprogramaRpaRossiUyd(JSON.parse(e.taskdata), e.idTask);
           }
         });
         resolve(data);

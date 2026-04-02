@@ -96,7 +96,7 @@ router.post("/agenda", cors(), async function (req, res) {
     },
   );
   var item = {
-    aplicacion: "RpaRossi",
+    aplicacion: "RpaRossiUyd",
     username: taskdata.usuario,
     hora: taskdata.hora,
     minuto: taskdata.minuto,
@@ -606,6 +606,8 @@ const procesaDetalles = async (nroDespacho) => {
 
     await saveImportacion(item);
     console.log("Guardando Importacion", nroDespacho);
+    const randomNumber2 = Math.floor(Math.random() * (2000 - 1500 + 1)) + 1500;
+    console.log("Esperando ", randomNumber2);
 
     var btn = "";
     if (subtabla.length == 1) {
@@ -628,7 +630,8 @@ const procesaDetalles = async (nroDespacho) => {
         20000,
       );
     }
-    await btn.click();
+    //await btn.click();
+    await driver.executeScript("arguments[0].click();", btn);
 
     const randomNumber = Math.floor(Math.random() * (2000 - 1500 + 1)) + 1500;
     console.log("Esperando ", randomNumber);
@@ -637,16 +640,17 @@ const procesaDetalles = async (nroDespacho) => {
     console.log("Inicio Ventana Gastos", nroDespacho);
     await procesaVentanaGastos(item.nroDespacho);
 
-    console.log("Inicio Ventana Carga", nroDespacho);
-    await procesaVentanaCarga(item.nroDespacho);
+    // console.log("Inicio Ventana Carga", nroDespacho);
+    // await procesaVentanaCarga(item.nroDespacho);
 
-    console.log("Inicio Ventana Doctos", nroDespacho);
-    await procesaVentanaDoctos(item.nroDespacho);
+    // console.log("Inicio Ventana Doctos", nroDespacho);
+    // await procesaVentanaDoctos(item.nroDespacho);
 
     let btnCerrarModal = await getObjeto(
       '//*[@id="main-modal"]/div/div/div[3]/button',
     );
-    await btnCerrarModal.click();
+    //await btnCerrarModal.click();
+    await driver.executeScript("arguments[0].click();", btnCerrarModal);
 
     sublinea++;
   }
@@ -1040,394 +1044,72 @@ const procesaVentanaGastos = async (nroDespacho) => {
   console.log("Lee fechaAceptacion");
 
   let fileNameUyD = await getFileNameUyd(nroDespacho);
+  console.log("Leida ok fechaAceptacion");
 
-  // if (await notieneUyd(nroDespacho)) {
-  //   console.log("Busca objeto UYD");
+  if (await notieneUyd(nroDespacho)) {
+    console.log("Busca objeto UYD");
 
-  //   let links2 = null;
-  //   links2 = await driver.findElement(
-  //     By.xpath(
-  //       "/html/body/div[4]/div/div/div[2]/div/div/div/div/div[1]/div[2]/div[2]/div",
-  //     ),
-  //   );
-  //   await driver.executeScript(
-  //     "arguments[0].scrollIntoView({ block: 'center' });",
-  //     links2,
-  //   );
+    let links2 = null;
+    links2 = await driver.findElement(
+      By.xpath(
+        "/html/body/div[4]/div/div/div[2]/div/div/div/div/div[1]/div[2]/div[2]/div",
+      ),
+    );
+    await driver.executeScript(
+      "arguments[0].scrollIntoView({ block: 'center' });",
+      links2,
+    );
 
-  //   let htmlUYD = null;
-  //   htmlUYD = await links2.getAttribute("innerHTML");
+    let htmlUYD = null;
+    htmlUYD = await links2.getAttribute("innerHTML");
 
-  //   if (htmlUYD.includes("Descargar UYD")) {
-  //     try {
-  //       console.log("get objeto UYD");
-  //       let objUyD = null;
-  //       // objUyD = await getObjeto(
-  //       //   '//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a',
-  //       // );
-  //       objUyD = await driver.wait(
-  //         until.elementLocated(
-  //           By.xpath(
-  //             "/html/body/div[4]/div/div/div[2]/div/div/div/div/div[1]/div[2]/div[2]/div/div[3]/div/div/a",
-  //           ),
-  //         ),
-  //         10000,
-  //       );
+    if (htmlUYD.includes("Descargar UYD")) {
+      try {
+        console.log("get objeto UYD");
+        let objUyD = null;
+        // objUyD = await getObjeto(
+        //   '//*[@id="tResumen"]/div[2]/div[2]/div/div[3]/div/div[2]/a',
+        // );
+        objUyD = await driver.wait(
+          until.elementLocated(
+            By.xpath(
+              "/html/body/div[4]/div/div/div[2]/div/div/div/div/div[1]/div[2]/div[2]/div/div[3]/div/div/a",
+            ),
+          ),
+          10000,
+        );
 
-  //       await driver.sleep(1000);
+        await driver.sleep(1000);
 
-  //       console.log("Center View objeto UYD");
+        console.log("Center View objeto UYD");
 
-  //       await driver.executeScript(
-  //         "arguments[0].scrollIntoView({ block: 'center' });",
-  //         objUyD,
-  //       );
-  //       await driver.sleep(2000);
-  //       console.log("procesa objeto UYD click");
-  //       await driver.executeScript("arguments[0].click();", objUyD);
-  //       await driver.sleep(2000);
-  //       console.log("procesa objeto UYD pdf");
-  //       fileNameUyD = await obtenerPdfMasNuevo(downloadDir);
-  //     } catch (error) {
-  //       console.log("Error al obtener objeto UYD", error);
-  //     }
-  //   }
-  // }
-
-  while (true) {
-    try {
-      tabGastos = await driver.wait(
-        until.elementLocated(By.xpath('//*[@id="myTab"]/li[2]/a/span')),
-        20000,
-      );
-      await tabGastos.click();
-      break;
-    } catch (e) {
-      console.log("Esperando tabGastos");
-      await driver.sleep(2000);
+        await driver.executeScript(
+          "arguments[0].scrollIntoView({ block: 'center' });",
+          objUyD,
+        );
+        await driver.sleep(2000);
+        console.log("procesa objeto UYD click");
+        await driver.executeScript("arguments[0].click();", objUyD);
+        await driver.sleep(2000);
+        console.log("procesa objeto UYD pdf");
+        fileNameUyD = await obtenerPdfMasNuevo(downloadDir);
+      } catch (error) {
+        console.log("Error al obtener objeto UYD", error);
+      }
     }
   }
 
   await driver.sleep(3000);
 
-  var noFacturado = "";
-  try {
-    const randomNumber = Math.floor(Math.random() * (2000 - 1500 + 1)) + 1500;
-    console.log("Esperando si hay gastos", randomNumber);
-
-    var noFacturado = await driver
-      .wait(
-        until.elementLocated(
-          By.xpath('//*[@id="contenedor-costo"]/div/div/p[2]'),
-        ),
-        randomNumber,
-      )
-      .getText();
-  } catch (error) {
-    console.log("hay gastos");
-  }
-
-  if (noFacturado.includes("no está facturado")) {
-    var item = {
-      idImportacion: await getIdImportacion(nroDespacho),
-      nroDespacho: nroDespacho,
-      nroReferencia: "",
-      nave: "",
-      mercaderia: "",
-      bultos: "",
-      tipocambio: "",
-      monedaCif: "",
-      valorCif: "",
-      MonedaIvaGcp: "",
-      valorIvaGcp: "",
-      monedaAdValorem: "",
-      AdValorem: "",
-      MonedaAlmacenaje: "",
-      Almacenaje: "",
-      nroFactura: nroFacturaText,
-      fechaFactura: fechaFacturaText,
-      fechaGuia: fechaGuiaText,
-      fechaPago: fechaPagoText,
-      fechaAceptacion: fechaAceptacionText,
-      gastosAgencia: JSON.stringify([]),
-      desembolsosAgencia: JSON.stringify([]),
-      nombreArchivoUyD: fileNameUyD,
-    };
-    await saveGastos(item);
-    return;
-  }
-
-  var nDesp = "";
-  try {
-    var nDesp = await driver
-      .wait(
-        until.elementLocated(
-          By.xpath(
-            '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[1]/div[1]/p/span',
-          ),
-        ),
-        4000,
-      )
-      .getText();
-  } catch (error) {
-    return;
-  }
-  var nRef = await driver
-    .wait(
-      until.elementLocated(
-        By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[1]/div[2]/p/span',
-        ),
-      ),
-      20000,
-    )
-    .getText();
-  var nave = await driver
-    .wait(
-      until.elementLocated(
-        By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[1]/div[3]/p/span',
-        ),
-      ),
-      20000,
-    )
-    .getText();
-
-  var mercaderia = await driver
-    .wait(
-      until.elementLocated(
-        By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[2]/div[1]/p/span',
-        ),
-      ),
-      20000,
-    )
-    .getText();
-
-  var bultos = await driver
-    .wait(
-      until.elementLocated(
-        By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[2]/div[2]/p/span',
-        ),
-      ),
-    )
-    .getText();
-
-  var tipocambio = await driver
-    .wait(
-      until.elementLocated(
-        By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[3]/div[1]/p/span',
-        ),
-      ),
-    )
-    .getText();
-
-  var monedaCif = await driver
-    .wait(
-      until.elementLocated(
-        By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[3]/div[2]/p/span[1]',
-        ),
-      ),
-    )
-    .getText();
-
-  var valorCif = await driver
-    .wait(
-      until.elementLocated(
-        By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[3]/div[2]/p/span[2]',
-        ),
-      ),
-    )
-    .getText();
-
-  var MonedaIvaGcp = await driver
-    .wait(
-      until.elementLocated(
-        By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[4]/div[1]/p/span[1]',
-        ),
-      ),
-    )
-    .getText();
-
-  var valorIvaGcp = await driver
-    .wait(
-      until.elementLocated(
-        By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[4]/div[1]/p/span[2]',
-        ),
-      ),
-    )
-    .getText();
-
-  var monedaAdValorem = await driver
-    .wait(
-      until.elementLocated(
-        By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[4]/div[2]/p/span[1]',
-        ),
-      ),
-    )
-    .getText();
-
-  var AdValorem = await driver
-    .wait(
-      until.elementLocated(
-        By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[4]/div[2]/p/span[2]',
-        ),
-      ),
-    )
-    .getText();
-
-  var MonedaAlmacenaje = await driver
-    .wait(
-      until.elementLocated(
-        By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[4]/div[3]/p/span[1]',
-        ),
-      ),
-    )
-    .getText();
-
-  var Almacenaje = await driver
-    .wait(
-      until.elementLocated(
-        By.xpath(
-          '//*[@id="contenedor-costo"]/div/div/div[1]/div/div[4]/div[3]/p/span[2]',
-        ),
-      ),
-    )
-    .getText();
-
-  var tablaGastosAgencia = await driver.wait(
-    until.elementsLocated(
-      By.xpath('//*[@id="contenedor-costo"]/div/div/div[2]/div/div'),
-    ),
-    20000,
-  );
-
-  var gastosAgencia = [];
-
-  for (e of tablaGastosAgencia) {
-    var sublineaHTML = await e.getAttribute("innerHTML");
-    var dom = parseFromString(sublineaHTML);
-    var columnas = dom.getElementsByTagName("div");
-
-    var item = {
-      nombreGasto: columnas[0].textContent.trim(),
-      moneda: columnas[1].textContent.trim().split(" ")[0],
-      valor: columnas[1].textContent.trim().split(" ")[1],
-    };
-    gastosAgencia.push(item);
-  }
-
-  // var tablaDesembolsos = await driver.wait(
-  //   until.elementsLocated(
-  //     By.xpath('//*[@id="contenedor-costo"]/div/div/div[3]/div/div')
-  //   ),
-  //   20000
-  // );
-  // var desembolsos = [];
-
-  // for (e of tablaDesembolsos) {
-  //   var sublineaHTML = await e.getAttribute("innerHTML");
-  //   var dom = parseFromString(sublineaHTML);
-  //   var columnas = dom.getElementsByTagName("div");
-
-  //   var item = {
-  //     nombreGasto: columnas[0].textContent.trim().replace(/\n/g, ""),
-  //     moneda: columnas[1].textContent.trim().split(" ")[0],
-  //     valor: columnas[1].textContent.trim().split(" ")[1],
-  //   };
-  //   desembolsos.push(item);
-  // }
-
-  // rescatar tipo de documentos
-
-  var tabDocDesembolsos = await getObjeto('//*[@id="myTab"]/li[5]/a/span');
-  await tabDocDesembolsos.click();
-  var desembolsos = [];
-
-  var excelDesembolsos = await getObjeto(
-    '//*[@id="contenedor-gastos"]/div[1]/div[2]/a[1]',
-  );
-  if (excelDesembolsos) {
-    const elementVisible = await driver.wait(
-      until.elementIsVisible(excelDesembolsos),
-      5000,
-    );
-    const elementClickable = await driver.wait(
-      until.elementIsEnabled(excelDesembolsos),
-      5000,
-    );
-
-    await excelDesembolsos.click();
-
-    var fileName = await obtenerXlsMasNuevo(downloadDir);
-    var filePath = path.join(downloadDir, fileName);
-
-    const results = await procesaXls(filePath);
-
-    for (let [i, d] of results.entries()) {
-      let afecto = false;
-      let proveedor = d.Proveedor.toUpperCase().trim();
-      let concepto = d.Conceptos.toUpperCase().trim();
-      let td = d.Tipo.toUpperCase().trim();
-
-      if (proveedor.includes("SEREMI") || concepto.includes("THC")) {
-        afecto = false;
-      } else if (
-        td.includes("EXENT") ||
-        td.includes("BOLET") ||
-        td.includes("HONOR")
-      ) {
-        afecto = false;
-      } else {
-        afecto = true;
-      }
-
-      var item = {
-        nombreGasto: `${d.Conceptos.toUpperCase().trim()} | ${proveedor}`,
-        moneda: d.Monto.trim().split(" ")[0],
-        valor: d.Monto.trim().split(" ")[2],
-        afecto: afecto,
-      };
-      desembolsos.push(item);
-    }
-  }
+  // if (noFacturado.includes("no está facturado")) {
   var item = {
     idImportacion: await getIdImportacion(nroDespacho),
-    nroDespacho: nDesp,
-    nroReferencia: nRef,
-    nave: nave,
-    mercaderia: mercaderia,
-    bultos: bultos,
-    tipocambio: tipocambio,
-    monedaCif: monedaCif,
-    valorCif: valorCif,
-    MonedaIvaGcp: MonedaIvaGcp,
-    valorIvaGcp: valorIvaGcp,
-    monedaAdValorem: monedaAdValorem,
-    AdValorem: AdValorem,
-    MonedaAlmacenaje: MonedaAlmacenaje,
-    Almacenaje: Almacenaje,
-    nroFactura: nroFacturaText,
-    fechaFactura: fechaFacturaText,
-    fechaGuia: fechaGuiaText,
-    fechaPago: fechaPagoText,
-    fechaAceptacion: fechaAceptacionText,
-    gastosAgencia: JSON.stringify(gastosAgencia),
-    desembolsosAgencia: JSON.stringify(desembolsos),
+    nroDespacho: nroDespacho,
     nombreArchivoUyD: fileNameUyD,
   };
   await saveGastos(item);
-
-  console.log("Guardando Gastos", nDesp);
+  return;
+  //}
 };
 
 const getIdImportacion = async (nroDespachoI) => {
@@ -1921,8 +1603,8 @@ router.get(
 );
 
 router.post("/updateDetalles", cors(), async function (req, res) {
-  let { nroDespacho, detalles, borraPackingList } = req.body;
-  if (!nroDespacho || !detalles || !borraPackingList) {
+  let { nroDespacho, detalles } = req.body;
+  if (!nroDespacho || !detalles) {
     res.send({
       error: true,
       message: "Faltan parámetros",
@@ -1941,17 +1623,11 @@ router.post("/updateDetalles", cors(), async function (req, res) {
   }
 
   // Actualizar los detalles en la base de datos
-  if (borraPackingList == "si") {
-    await imp_importacion_archivo.update(
-      { detalles: JSON.stringify(detalles), packingList: "" },
-      { where: { nroDespacho: nroDespacho } },
-    );
-  } else {
-    await imp_importacion_archivo.update(
-      { detalles: JSON.stringify(detalles) },
-      { where: { nroDespacho: nroDespacho } },
-    );
-  }
+  await imp_importacion_archivo.update(
+    { detalles: JSON.stringify(detalles) },
+    { where: { nroDespacho: nroDespacho } },
+  );
+
   res.send({
     error: false,
     message: "Detalles actualizados correctamente",
@@ -2016,5 +1692,5 @@ router.get("/listCargados/:fecha", cors(), async function (req, res) {
   }
 });
 
-exports.RpaRossiRoutes = router;
-exports.reprogramaRpaRossi = reprograma;
+exports.RpaRossiUydRoutes = router;
+exports.reprogramaRpaRossiUyd = reprograma;
