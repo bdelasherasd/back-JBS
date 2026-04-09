@@ -1958,6 +1958,26 @@ router.post("/updateDetalles", cors(), async function (req, res) {
   });
 });
 
+router.post("/eliminaPackingList", cors(), async function (req, res) {
+  let { nroDespacho } = req.body;
+  if (!nroDespacho) {
+    res.send({
+      error: true,
+      message: "Faltan parámetros",
+    });
+    return;
+  }
+
+  await imp_importacion_archivo.update(
+    { packingList: "" },
+    { where: { nroDespacho: nroDespacho } },
+  );
+  res.send({
+    error: false,
+    message: "Packing List eliminado correctamente",
+  });
+});
+
 router.get("/listCargados/:fecha", cors(), async function (req, res) {
   let fecha = req.params.fecha;
   let sql = "";
