@@ -513,7 +513,7 @@ const procesaDetalles = async (nroDespacho) => {
     try {
       var btn = await driver.wait(
         until.elementLocated(
-          By.xpath('//*[@id="exportar"]/fieldset/div[18]/button'),
+          By.xpath('//*[@id="exportar"]/fieldset/div[19]/button'),
         ),
         20000,
       );

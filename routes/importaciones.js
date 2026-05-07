@@ -70,6 +70,8 @@ router.get("/listImportaciones", cors(), async function (req, res) {
 
     for (let [index, d] of data.entries()) {
       let hayErrores = false;
+      console.log("Validando importación ID:", d.nroDespacho);
+
       let detalles = JSON.parse(d.detalles);
       if (detalles) {
         for (let e of detalles) {
