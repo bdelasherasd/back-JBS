@@ -60,7 +60,7 @@ router.get(
     sql += "b.gastosAgencia, b.desembolsosAgencia  ";
     sql += "from imp_importacions a left join  ";
     sql +=
-      "imp_gastos_aduanas b on a.idImportacion = b.idImportacion left join ";
+      "imp_gastos_aduanas b on a.idImportacion = b.idImportacion and rtrim(b.valorIvaGcp) <> ''  left join ";
     sql +=
       "imp_importacion_archivos c on a.idImportacion = c.idImportacion  left join  ";
     sql += "imp_csvs i on i.despacho = a.nroDespacho left join  ";
@@ -87,7 +87,7 @@ router.get(
           let iva = 0;
           for (let desembolso of desembolsos) {
             desembolsosAgencia += parseFloat(
-              desembolso.valor.replace(/\./g, "")
+              desembolso.valor.replace(/\./g, ""),
             );
             if (desembolso.afecto) {
               iva += parseFloat(desembolso.valor.replace(/\./g, ""));
@@ -110,7 +110,7 @@ router.get(
           data[i]["TiempoUso"] = tiempodeuso;
           data[i]["% Importacion"] = redondear(
             (data[i]["CostoImportacionNeto"] / item["CLP Importacion"]) * 100,
-            2
+            2,
           );
         }
 
@@ -127,7 +127,7 @@ router.get(
     } catch (error) {
       console.log(error.message);
     }
-  }
+  },
 );
 
 const getProteina = async (mercaderia) => {
