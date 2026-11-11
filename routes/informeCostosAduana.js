@@ -82,21 +82,39 @@ router.get(
           let desembolsosAgencia = 0;
           let tiempodeuso = 0;
           for (let gasto of gastos) {
-            gastosAgencia += parseFloat(gasto.valor.replace(/\./g, ""));
+            try {
+              gastosAgencia += parseFloat(gasto.valor.replace(/\./g, ""));
+            } catch (error) {
+              console.log("Error parsing gasto.valor: " + item.nroDespacho);
+            }
           }
           let iva = 0;
           for (let desembolso of desembolsos) {
-            desembolsosAgencia += parseFloat(
-              desembolso.valor.replace(/\./g, ""),
-            );
-            if (desembolso.afecto) {
-              iva += parseFloat(desembolso.valor.replace(/\./g, ""));
+            try {
+              desembolsosAgencia += parseFloat(
+                desembolso.valor.replace(/\./g, ""),
+              );
+              if (desembolso.afecto) {
+                iva += parseFloat(desembolso.valor.replace(/\./g, ""));
+              }
+            } catch (error) {
+              console.log(
+                "Error parsing desembolso.valor: " + item.nroDespacho,
+              );
             }
             if (desembolso.nombreGasto) {
               if (
                 desembolso.nombreGasto.toUpperCase().includes("TIEMPO DE USO")
               ) {
-                tiempodeuso += parseFloat(desembolso.valor.replace(/\./g, ""));
+                try {
+                  tiempodeuso += parseFloat(
+                    desembolso.valor.replace(/\./g, ""),
+                  );
+                } catch (error) {
+                  console.log(
+                    "Error parsing tiempo de uso: " + item.nroDespacho,
+                  );
+                }
               }
             }
           }
